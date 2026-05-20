@@ -3,9 +3,9 @@ import Link from "next/link";
 const footerLinks = {
   jobSeekers: [
     { label: "Search Jobs", href: "/job-seekers" },
-    { label: "Create Profile", href: "/register" },
-    { label: "Upload Resume", href: "/register" },
-    { label: "Job Alerts", href: "/register" },
+    // { label: "Create Profile", href: "/register" },
+    // { label: "Upload Resume", href: "/register" },
+    // { label: "Job Alerts", href: "/register" },
     { label: "Apply Online", href: "/job-seekers" },
   ],
   employers: [

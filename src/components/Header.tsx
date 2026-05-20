@@ -12,8 +12,8 @@ const navLinks = [
   { label: "Home", href: "/" },
   { label: "Browse Jobs", href: "/jobs" },
   { label: "For Employers", href: "/employers" },
-  { label: "For Job Seekers", href: "/job-seekers" },
-  { label: "Pricing", href: "/pricing" },
+  // { label: "For Job Seekers", href: "/job-seekers" },
+  // { label: "Pricing", href: "/pricing" },
   { label: "About", href: "/about" },
   { label: "Contact", href: "/contact" },
 ];

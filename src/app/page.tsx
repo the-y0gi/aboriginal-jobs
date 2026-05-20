@@ -557,11 +557,10 @@ export default function HomePage() {
                 key={pkg.name}
                 variants={fadeUp}
                 whileHover={{ y: -5, boxShadow: pkg.highlight ? '0 20px 50px rgba(200,120,42,0.3)' : '0 12px 30px rgba(107,58,42,0.12)' }}
-                className={`rounded-2xl p-7 relative transition-shadow duration-200 ${
-                  pkg.highlight
-                    ? 'bg-[#C8782A] text-white ring-2 ring-[#C8782A] shadow-xl lg:-mt-4 lg:mb-4'
-                    : 'bg-white border border-[#C8782A]/10'
-                }`}
+                className={`rounded-2xl p-7 relative transition-shadow duration-200 ${pkg.highlight
+                  ? 'bg-[#C8782A] text-white ring-2 ring-[#C8782A] shadow-xl lg:-mt-4 lg:mb-4'
+                  : 'bg-white border border-[#C8782A]/10'
+                  }`}
               >
                 {pkg.badge && (
                   <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
@@ -589,11 +588,10 @@ export default function HomePage() {
                 </ul>
                 <Link href="/pricing">
                   <Button
-                    className={`w-full font-semibold transition-all duration-200 ${
-                      pkg.highlight
-                        ? 'bg-white text-[#C8782A] hover:bg-[#FAF5EE]'
-                        : 'bg-[#C8782A] hover:bg-[#B06820] text-white'
-                    }`}
+                    className={`w-full font-semibold transition-all duration-200 ${pkg.highlight
+                      ? 'bg-white text-[#C8782A] hover:bg-[#FAF5EE]'
+                      : 'bg-[#C8782A] hover:bg-[#B06820] text-white'
+                      }`}
                   >
                     {pkg.cta}
                   </Button>

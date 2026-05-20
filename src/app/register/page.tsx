@@ -1,29 +1,25 @@
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'motion/react';
 import {
-  Users, Building2, Eye, EyeOff, CheckCircle,
-  AlertCircle, ChevronRight, ArrowLeft, Sparkles,
+  Building2, Eye, EyeOff, CheckCircle,
+  AlertCircle, ChevronRight, ArrowLeft, Sparkles, Lock, RefreshCw
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { signUp } from '@/lib/auth/auth-client';
+// import { signUp } from '@/lib/auth/auth-client';
+import { InputOTP, InputOTPGroup, InputOTPSlot, InputOTPSeparator } from "@/components/ui/input-otp";
 
 /* ── Types ──────────────────────────────────────────────────────────── */
-type AccountType = 'jobseeker' | 'employer';
-
 interface FormData {
-  type: AccountType;
-  // Step 2 — personal / org
   firstName: string;
   lastName: string;
   orgName: string;
   province: string;
-  // Step 3 — credentials
   email: string;
   password: string;
   confirmPassword: string;
@@ -40,7 +36,7 @@ const PROVINCES = [
   'Saskatchewan', 'Yukon',
 ];
 
-const STEP_LABELS = ['Account Type', 'Your Details', 'Create Account'];
+const STEP_LABELS = ['Your Details', 'Create Account', 'Verify Email'];
 
 /* ── Helpers ────────────────────────────────────────────────────────── */
 function FieldError({ msg }: { msg?: string }) {
@@ -78,21 +74,19 @@ function StepIndicator({ current, total }: { current: number; total: number }) {
         return (
           <div key={step} className="flex items-center gap-2">
             <div
-              className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
-                done
-                  ? 'bg-[#7A9E7E] text-white'
-                  : active
+              className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${done
+                ? 'bg-[#7A9E7E] text-white'
+                : active
                   ? 'bg-[#C8782A] text-white shadow-md'
                   : 'bg-[#C8782A]/10 text-[#6B3A2A]/40'
-              }`}
+                }`}
             >
               {done ? <CheckCircle size={14} /> : step}
             </div>
             {i < total - 1 && (
               <div
-                className={`w-8 h-0.5 rounded-full transition-all duration-300 ${
-                  done ? 'bg-[#7A9E7E]' : 'bg-[#C8782A]/15'
-                }`}
+                className={`w-8 h-0.5 rounded-full transition-all duration-300 ${done ? 'bg-[#7A9E7E]' : 'bg-[#C8782A]/15'
+                  }`}
               />
             )}
           </div>
@@ -121,17 +115,16 @@ const slideVariants = {
 };
 
 /* ── Validation per step ────────────────────────────────────────────── */
-function validateStep2(data: FormData): StepErrors {
+function validateStep1(data: FormData): StepErrors {
   const errs: StepErrors = {};
   if (!data.firstName.trim()) errs.firstName = 'First name is required.';
   if (!data.lastName.trim()) errs.lastName = 'Last name is required.';
-  if (data.type === 'employer' && !data.orgName.trim())
-    errs.orgName = 'Organization name is required.';
+  if (!data.orgName.trim()) errs.orgName = 'Organization name is required.';
   if (!data.province) errs.province = 'Please select your province or territory.';
   return errs;
 }
 
-function validateStep3(data: FormData): StepErrors {
+function validateStep2(data: FormData): StepErrors {
   const errs: StepErrors = {};
   if (!data.email) errs.email = 'Email is required.';
   else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email))
@@ -166,9 +159,8 @@ function PasswordStrength({ password }: { password: string }) {
         {[1, 2, 3, 4].map((i) => (
           <div
             key={i}
-            className={`h-1 flex-1 rounded-full transition-all duration-300 ${
-              i <= score ? colors[score] : 'bg-[#C8782A]/10'
-            }`}
+            className={`h-1 flex-1 rounded-full transition-all duration-300 ${i <= score ? colors[score] : 'bg-[#C8782A]/10'
+              }`}
           />
         ))}
       </div>
@@ -178,8 +170,7 @@ function PasswordStrength({ password }: { password: string }) {
 }
 
 /* ── Main page ──────────────────────────────────────────────────────── */
-export default function RegisterPage() {
-  const searchParams = useSearchParams();
+function RegisterForm() {
   const [step, setStep] = useState(1);
   const [direction, setDirection] = useState(1);
   const [errors, setErrors] = useState<StepErrors>({});
@@ -189,8 +180,12 @@ export default function RegisterPage() {
   const [submitted, setSubmitted] = useState(false);
   const [serverError, setServerError] = useState('');
 
+  const [otpVal, setOtpVal] = useState('');
+  const [otpCountdown, setOtpCountdown] = useState(0);
+  const [otpSentMsg, setOtpSentMsg] = useState('');
+  const [devOtp, setDevOtp] = useState('');
+
   const [form, setForm] = useState<FormData>({
-    type: 'jobseeker',
     firstName: '',
     lastName: '',
     orgName: '',
@@ -201,13 +196,14 @@ export default function RegisterPage() {
     agreeTerms: false,
   });
 
-  /* Pre-select type from URL param */
+  // Countdown timer for Resend OTP
   useEffect(() => {
-    const t = searchParams.get('type');
-    if (t === 'employer' || t === 'jobseeker') {
-      setForm((prev) => ({ ...prev, type: t }));
-    }
-  }, [searchParams]);
+    if (otpCountdown <= 0) return;
+    const interval = setInterval(() => {
+      setOtpCountdown((c) => c - 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [otpCountdown]);
 
   const set = <K extends keyof FormData>(key: K, value: FormData[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -216,6 +212,8 @@ export default function RegisterPage() {
 
   const goNext = async () => {
     if (step === 1) {
+      const errs = validateStep1(form);
+      if (Object.keys(errs).length > 0) { setErrors(errs); return; }
       setDirection(1);
       setStep(2);
       return;
@@ -223,32 +221,128 @@ export default function RegisterPage() {
     if (step === 2) {
       const errs = validateStep2(form);
       if (Object.keys(errs).length > 0) { setErrors(errs); return; }
-      setDirection(1);
-      setStep(3);
-      return;
-    }
-    if (step === 3) {
-      const errs = validateStep3(form);
-      if (Object.keys(errs).length > 0) { setErrors(errs); return; }
+
       setLoading(true);
       setServerError('');
+      setOtpSentMsg('');
       try {
-        const result = await signUp.email({
-          email: form.email,
-          password: form.password,
-          name: `${form.firstName} ${form.lastName}`.trim(),
+        const res = await fetch('/api/auth/otp/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: form.email }),
         });
-        if (result.error) {
-          setServerError(result.error.message || 'Registration failed. Please try again.');
+        const data = await res.json();
+
+        if (!res.ok) {
+          setServerError(data.error || 'Failed to send verification code. Please try again.');
           setLoading(false);
           return;
         }
-        setSubmitted(true);
+
+        if (data._devOtp) {
+          setDevOtp(data._devOtp);
+        } else {
+          setDevOtp('');
+        }
+
+        setDirection(1);
+        setStep(3);
+        setOtpVal('');
+        setOtpCountdown(60);
+        setOtpSentMsg('A 6-digit verification code has been sent to your email.');
       } catch {
         setServerError('Something went wrong. Please try again.');
       } finally {
         setLoading(false);
       }
+      return;
+    }
+    if (step === 3) {
+      if (otpVal.length < 6) {
+        setServerError('Please enter the full 6-digit verification code.');
+        return;
+      }
+      setLoading(true);
+      setServerError('');
+      try {
+        // Verify the OTP in backend
+        const verifyRes = await fetch('/api/auth/otp/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: form.email, otp: otpVal }),
+        });
+        const verifyData = await verifyRes.json();
+
+        if (!verifyRes.ok) {
+          setServerError(verifyData.error || 'Incorrect or expired verification code.');
+          setLoading(false);
+          return;
+        }
+
+        const registerRes = await fetch('/api/auth/register-employer', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+
+          body: JSON.stringify({
+            firstName: form.firstName,
+            lastName: form.lastName,
+            email: form.email,
+            password: form.password,
+            orgName: form.orgName,
+            province: form.province,
+          }),
+        });
+
+        const registerData = await registerRes.json();
+
+        if (!registerRes.ok) {
+          setServerError(
+            registerData.error || 'Registration failed.'
+          );
+
+          setLoading(false);
+          return;
+        }
+        setSubmitted(true);
+      } catch {
+        setServerError('An error occurred during account creation. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  const handleResendOtp = async () => {
+    if (otpCountdown > 0 || loading) return;
+    setLoading(true);
+    setServerError('');
+    setOtpSentMsg('');
+    try {
+      const res = await fetch('/api/auth/otp/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: form.email }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        setServerError(data.error || 'Failed to resend verification code.');
+        setLoading(false);
+        return;
+      }
+
+      if (data._devOtp) {
+        setDevOtp(data._devOtp);
+      }
+
+      setOtpCountdown(60);
+      setOtpSentMsg('A new 6-digit verification code has been sent to your email.');
+    } catch {
+      setServerError('Failed to resend code. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -256,446 +350,436 @@ export default function RegisterPage() {
     setDirection(-1);
     setStep((s) => s - 1);
     setErrors({});
+    setServerError('');
+    setOtpSentMsg('');
   };
-
-  const isEmployer = form.type === 'employer';
 
   /* ── Success ─────────────────────────────────────────────────────── */
   if (submitted) {
     return (
-      <>
-        <section className="bg-[#FAF5EE] min-h-[85vh] flex items-center justify-center py-16 px-4">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5 }}
-            className="w-full max-w-md"
-          >
-            <div className="bg-white rounded-3xl p-10 border border-[#C8782A]/10 shadow-sm text-center">
-              <div className="w-16 h-16 rounded-full bg-[#C8782A]/10 flex items-center justify-center mx-auto mb-5">
-                <Sparkles size={28} className="text-[#C8782A]" />
-              </div>
-              <h1
-                className="text-2xl font-bold text-[#1C1C1C] mb-2"
-                style={{ fontFamily: "'Playfair Display', serif" }}
-              >
-                Welcome to Aboriginal Jobs Canada!
-              </h1>
-              <p className="text-[#6B3A2A]/70 text-sm mb-1">
-                Your {isEmployer ? 'employer' : 'job seeker'} account has been created for
-              </p>
-              <p className="text-[#C8782A] font-semibold mb-6">{form.email}</p>
-
-              {/* Next steps */}
-              <div className="bg-[#FAF5EE] rounded-2xl p-5 mb-7 text-left">
-                <p className="text-xs font-semibold text-[#6B3A2A]/50 uppercase tracking-wider mb-3">
-                  Your next steps
-                </p>
-                <ul className="flex flex-col gap-2.5">
-                  {(isEmployer
-                    ? [
-                        'Complete your employer profile',
-                        'Post your first job listing',
-                        'Review incoming applications',
-                      ]
-                    : [
-                        'Complete your job seeker profile',
-                        'Upload your resume',
-                        'Browse and apply for jobs',
-                      ]
-                  ).map((item, i) => (
-                    <li key={item} className="flex items-center gap-2.5 text-sm text-[#6B3A2A]/75">
-                      <div className="w-5 h-5 rounded-full bg-[#C8782A] flex items-center justify-center flex-shrink-0">
-                        <span className="text-white text-xs font-bold">{i + 1}</span>
-                      </div>
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="flex flex-col gap-3">
-                <Link href={isEmployer ? '/post-a-job' : '/job-seekers'}>
-                  <Button className="w-full bg-[#C8782A] hover:bg-[#B06820] text-white font-semibold">
-                    {isEmployer ? 'Post Your First Job' : 'Browse Jobs'}
-                    <ChevronRight size={15} className="ml-1" />
-                  </Button>
-                </Link>
-                <Link href="/login">
-                  <Button variant="outline" className="w-full border-[#C8782A]/25 text-[#6B3A2A] hover:bg-[#C8782A]/5 font-medium">
-                    Sign In to Your Account
-                  </Button>
-                </Link>
-              </div>
+      <section className="bg-[#FAF5EE] min-h-[85vh] flex items-center justify-center py-16 px-4">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+          className="w-full max-w-md"
+        >
+          <div className="bg-white rounded-3xl p-10 border border-[#C8782A]/10 shadow-sm text-center">
+            <div className="w-16 h-16 rounded-full bg-[#C8782A]/10 flex items-center justify-center mx-auto mb-5">
+              <Sparkles size={28} className="text-[#C8782A]" />
             </div>
-          </motion.div>
-        </section>
-      </>
+            <h1
+              className="text-2xl font-bold text-[#1C1C1C] mb-2"
+              style={{ fontFamily: "'Playfair Display', serif" }}
+            >
+              Welcome to Aboriginal Jobs Canada!
+            </h1>
+            <p className="text-[#6B3A2A]/70 text-sm mb-1">
+              Your employer account has been created for
+            </p>
+            <p className="text-[#C8782A] font-semibold mb-6">{form.email}</p>
+
+            {/* Next steps */}
+            <div className="bg-[#FAF5EE] rounded-2xl p-5 mb-7 text-left">
+              <p className="text-xs font-semibold text-[#6B3A2A]/50 uppercase tracking-wider mb-3">
+                Your next steps
+              </p>
+              <ul className="flex flex-col gap-2.5">
+                {[
+                  'Complete your employer profile',
+                  'Post your first job listing',
+                  'Review incoming applications',
+                ].map((item, i) => (
+                  <li key={item} className="flex items-center gap-2.5 text-sm text-[#6B3A2A]/75">
+                    <div className="w-5 h-5 rounded-full bg-[#C8782A] flex items-center justify-center flex-shrink-0">
+                      <span className="text-white text-xs font-bold">{i + 1}</span>
+                    </div>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <Link href="/post-a-job">
+                <Button className="w-full bg-[#C8782A] hover:bg-[#B06820] text-white font-semibold">
+                  Post Your First Job
+                  <ChevronRight size={15} className="ml-1" />
+                </Button>
+              </Link>
+              <Link href="/login">
+                <Button variant="outline" className="w-full border-[#C8782A]/25 text-[#6B3A2A] hover:bg-[#C8782A]/5 font-medium">
+                  Sign In to Your Account
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </motion.div>
+      </section>
     );
   }
 
   /* ── Form ────────────────────────────────────────────────────────── */
   return (
-    <>
-      <section className="bg-[#FAF5EE] min-h-[85vh] flex items-center justify-center py-16 px-4">
-        <motion.div
-          initial={{ opacity: 0, y: 28 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45 }}
-          className="w-full max-w-md"
-        >
-          {/* Header */}
-          <div className="text-center mb-2">
-            <LogoMark />
-            <h1
-              className="text-3xl font-bold text-[#1C1C1C]"
-              style={{ fontFamily: "'Playfair Display', serif" }}
-            >
-              Create Your Account
-            </h1>
-            <p className="text-[#6B3A2A]/65 mt-2 text-sm">
-              Join Canada's Indigenous job platform — free to get started
-            </p>
-          </div>
-
-          {/* Step indicator */}
-          <div className="mt-7">
-            <StepIndicator current={step} total={3} />
-          </div>
-
-          {/* Step label */}
-          <p className="text-center text-xs font-semibold text-[#C8782A] uppercase tracking-widest mb-5">
-            Step {step} of 3 — {STEP_LABELS[step - 1]}
+    <section className="bg-[#FAF5EE] min-h-[85vh] flex items-center justify-center py-16 px-4">
+      <motion.div
+        initial={{ opacity: 0, y: 28 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.45 }}
+        className="w-full max-w-md"
+      >
+        {/* Header */}
+        <div className="text-center mb-2">
+          <LogoMark />
+          <h1
+            className="text-3xl font-bold text-[#1C1C1C]"
+            style={{ fontFamily: "'Playfair Display', serif" }}
+          >
+            Employer Registration
+          </h1>
+          <p className="text-[#6B3A2A]/65 mt-2 text-sm">
+            Join Canada's Indigenous job platform — connect with top talent
           </p>
+        </div>
 
-          {/* Animated step content */}
-          <div className="bg-white rounded-3xl border border-[#C8782A]/10 shadow-sm overflow-hidden">
-            <AnimatePresence mode="wait" custom={direction}>
-              <motion.div
-                key={step}
-                custom={direction}
-                variants={slideVariants}
-                initial="enter"
-                animate="center"
-                exit="exit"
-                className="p-8"
-              >
-                {/* ── STEP 1: Account type ──────────────────────────── */}
-                {step === 1 && (
-                  <div className="flex flex-col gap-5">
-                    <p className="text-sm text-[#6B3A2A]/70 leading-relaxed">
-                      Are you looking for work, or are you an employer looking to hire Indigenous talent?
-                    </p>
-                    <div className="grid grid-cols-1 gap-3">
-                      {/* Job seeker */}
-                      <button
-                        type="button"
-                        onClick={() => set('type', 'jobseeker')}
-                        className={`flex items-start gap-4 p-5 rounded-2xl border-2 text-left transition-all duration-200 ${
-                          form.type === 'jobseeker'
-                            ? 'border-[#C8782A] bg-[#C8782A]/5 shadow-sm'
-                            : 'border-[#C8782A]/15 hover:border-[#C8782A]/35'
-                        }`}
-                      >
-                        <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${form.type === 'jobseeker' ? 'bg-[#C8782A]' : 'bg-[#C8782A]/10'}`}>
-                          <Users size={20} className={form.type === 'jobseeker' ? 'text-white' : 'text-[#C8782A]'} />
-                        </div>
-                        <div>
-                          <p className={`font-bold text-base mb-0.5 ${form.type === 'jobseeker' ? 'text-[#C8782A]' : 'text-[#1C1C1C]'}`}>
-                            Job Seeker
-                          </p>
-                          <p className="text-xs text-[#6B3A2A]/60 leading-relaxed">
-                            I'm looking for employment opportunities. Browse jobs, upload my resume, and apply.
-                          </p>
-                        </div>
-                        {form.type === 'jobseeker' && (
-                          <CheckCircle size={18} className="text-[#C8782A] flex-shrink-0 ml-auto" />
-                        )}
-                      </button>
+        {/* Step indicator */}
+        <div className="mt-7">
+          <StepIndicator current={step} total={3} />
+        </div>
 
-                      {/* Employer */}
-                      <button
-                        type="button"
-                        onClick={() => set('type', 'employer')}
-                        className={`flex items-start gap-4 p-5 rounded-2xl border-2 text-left transition-all duration-200 ${
-                          form.type === 'employer'
-                            ? 'border-[#6B3A2A] bg-[#6B3A2A]/5 shadow-sm'
-                            : 'border-[#6B3A2A]/15 hover:border-[#6B3A2A]/35'
-                        }`}
-                      >
-                        <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${form.type === 'employer' ? 'bg-[#6B3A2A]' : 'bg-[#6B3A2A]/10'}`}>
-                          <Building2 size={20} className={form.type === 'employer' ? 'text-white' : 'text-[#6B3A2A]'} />
-                        </div>
-                        <div>
-                          <p className={`font-bold text-base mb-0.5 ${form.type === 'employer' ? 'text-[#6B3A2A]' : 'text-[#1C1C1C]'}`}>
-                            Employer
-                          </p>
-                          <p className="text-xs text-[#6B3A2A]/60 leading-relaxed">
-                            I want to post jobs and connect with skilled Indigenous talent across Canada.
-                          </p>
-                        </div>
-                        {form.type === 'employer' && (
-                          <CheckCircle size={18} className="text-[#6B3A2A] flex-shrink-0 ml-auto" />
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                )}
+        {/* Step label */}
+        <p className="text-center text-xs font-semibold text-[#C8782A] uppercase tracking-widest mb-5">
+          Step {step} of 3 — {STEP_LABELS[step - 1]}
+        </p>
 
-                {/* ── STEP 2: Personal / org details ───────────────── */}
-                {step === 2 && (
-                  <div className="flex flex-col gap-5">
-                    {/* Name */}
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="flex flex-col gap-1.5">
-                        <Label htmlFor="reg-first" className="text-[#6B3A2A] font-medium text-sm">
-                          First Name <span className="text-[#C8782A]">*</span>
-                        </Label>
-                        <Input
-                          id="reg-first"
-                          value={form.firstName}
-                          onChange={(e) => set('firstName', e.target.value)}
-                          placeholder="First name"
-                          className={`border-[#C8782A]/20 focus-visible:ring-[#C8782A]/30 ${errors.firstName ? 'border-red-400' : ''}`}
-                        />
-                        <FieldError msg={errors.firstName} />
-                      </div>
-                      <div className="flex flex-col gap-1.5">
-                        <Label htmlFor="reg-last" className="text-[#6B3A2A] font-medium text-sm">
-                          Last Name <span className="text-[#C8782A]">*</span>
-                        </Label>
-                        <Input
-                          id="reg-last"
-                          value={form.lastName}
-                          onChange={(e) => set('lastName', e.target.value)}
-                          placeholder="Last name"
-                          className={`border-[#C8782A]/20 focus-visible:ring-[#C8782A]/30 ${errors.lastName ? 'border-red-400' : ''}`}
-                        />
-                        <FieldError msg={errors.lastName} />
-                      </div>
-                    </div>
-
-                    {/* Org name (employer only) */}
-                    <AnimatePresence>
-                      {isEmployer && (
-                        <motion.div
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: 'auto' }}
-                          exit={{ opacity: 0, height: 0 }}
-                          transition={{ duration: 0.25 }}
-                          className="flex flex-col gap-1.5 overflow-hidden"
-                        >
-                          <Label htmlFor="reg-org" className="text-[#6B3A2A] font-medium text-sm">
-                            Organization Name <span className="text-[#C8782A]">*</span>
-                          </Label>
-                          <Input
-                            id="reg-org"
-                            value={form.orgName}
-                            onChange={(e) => set('orgName', e.target.value)}
-                            placeholder="Your organization or company"
-                            className={`border-[#C8782A]/20 focus-visible:ring-[#C8782A]/30 ${errors.orgName ? 'border-red-400' : ''}`}
-                          />
-                          <FieldError msg={errors.orgName} />
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-
-                    {/* Province */}
+        {/* Animated step content */}
+        <div className="bg-white rounded-3xl border border-[#C8782A]/10 shadow-sm overflow-hidden">
+          <AnimatePresence mode="wait" custom={direction}>
+            <motion.div
+              key={step}
+              custom={direction}
+              variants={slideVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              className="p-8"
+            >
+              {/* ── STEP 1: Personal / org details ───────────────── */}
+              {step === 1 && (
+                <div className="flex flex-col gap-5">
+                  {/* Name */}
+                  <div className="grid grid-cols-2 gap-4">
                     <div className="flex flex-col gap-1.5">
-                      <Label htmlFor="reg-province" className="text-[#6B3A2A] font-medium text-sm">
-                        Province / Territory <span className="text-[#C8782A]">*</span>
-                      </Label>
-                      <select
-                        id="reg-province"
-                        value={form.province}
-                        onChange={(e) => set('province', e.target.value)}
-                        className={`w-full rounded-md border bg-white px-3 py-2 text-sm text-[#1C1C1C] focus:outline-none focus:ring-2 focus:ring-[#C8782A]/30 ${errors.province ? 'border-red-400' : 'border-[#C8782A]/20'}`}
-                      >
-                        <option value="">Select province / territory</option>
-                        {PROVINCES.map((p) => <option key={p}>{p}</option>)}
-                      </select>
-                      <FieldError msg={errors.province} />
-                    </div>
-
-                    {/* Indigenous identity (job seeker only) */}
-                    {!isEmployer && (
-                      <div className="bg-[#FAF5EE] rounded-xl p-4 border border-[#C8782A]/10">
-                        <p className="text-xs font-semibold text-[#6B3A2A]/60 uppercase tracking-wider mb-2">
-                          Optional — Indigenous Identity
-                        </p>
-                        <p className="text-xs text-[#6B3A2A]/60 leading-relaxed mb-3">
-                          Sharing your identity is entirely optional and helps us connect you with
-                          relevant opportunities and community resources.
-                        </p>
-                        <div className="flex flex-col gap-2">
-                          {['First Nations', 'Métis', 'Inuit', 'Prefer not to say'].map((opt) => (
-                            <label key={opt} className="flex items-center gap-2.5 cursor-pointer">
-                              <input type="radio" name="identity" value={opt} className="accent-[#C8782A]" />
-                              <span className="text-sm text-[#6B3A2A]/75">{opt}</span>
-                            </label>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* ── STEP 3: Credentials ───────────────────────────── */}
-                {step === 3 && (
-                  <div className="flex flex-col gap-5">
-                    {/* Server error */}
-                    {serverError && (
-                      <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3">
-                        <AlertCircle size={15} className="flex-shrink-0" />
-                        {serverError}
-                      </div>
-                    )}
-                    {/* Email */}
-                    <div className="flex flex-col gap-1.5">
-                      <Label htmlFor="reg-email" className="text-[#6B3A2A] font-medium text-sm">
-                        Email Address <span className="text-[#C8782A]">*</span>
+                      <Label htmlFor="reg-first" className="text-[#6B3A2A] font-medium text-sm">
+                        First Name <span className="text-[#C8782A]">*</span>
                       </Label>
                       <Input
-                        id="reg-email"
-                        type="email"
-                        autoComplete="email"
-                        value={form.email}
-                        onChange={(e) => set('email', e.target.value)}
-                        placeholder="your@email.com"
-                        className={`border-[#C8782A]/20 focus-visible:ring-[#C8782A]/30 ${errors.email ? 'border-red-400' : ''}`}
+                        id="reg-first"
+                        value={form.firstName}
+                        onChange={(e) => set('firstName', e.target.value)}
+                        placeholder="First name"
+                        className={`border-[#C8782A]/20 focus-visible:ring-[#C8782A]/30 ${errors.firstName ? 'border-red-400' : ''}`}
                       />
-                      <FieldError msg={errors.email} />
+                      <FieldError msg={errors.firstName} />
                     </div>
-
-                    {/* Password */}
                     <div className="flex flex-col gap-1.5">
-                      <Label htmlFor="reg-password" className="text-[#6B3A2A] font-medium text-sm">
-                        Password <span className="text-[#C8782A]">*</span>
+                      <Label htmlFor="reg-last" className="text-[#6B3A2A] font-medium text-sm">
+                        Last Name <span className="text-[#C8782A]">*</span>
                       </Label>
-                      <div className="relative">
-                        <Input
-                          id="reg-password"
-                          type={showPw ? 'text' : 'password'}
-                          autoComplete="new-password"
-                          value={form.password}
-                          onChange={(e) => set('password', e.target.value)}
-                          placeholder="Create a strong password"
-                          className={`border-[#C8782A]/20 focus-visible:ring-[#C8782A]/30 pr-10 ${errors.password ? 'border-red-400' : ''}`}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPw((v) => !v)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B3A2A]/40 hover:text-[#C8782A] transition-colors"
-                          aria-label={showPw ? 'Hide password' : 'Show password'}
-                        >
-                          {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
-                        </button>
-                      </div>
-                      <PasswordStrength password={form.password} />
-                      <FieldError msg={errors.password} />
-                    </div>
-
-                    {/* Confirm password */}
-                    <div className="flex flex-col gap-1.5">
-                      <Label htmlFor="reg-confirm" className="text-[#6B3A2A] font-medium text-sm">
-                        Confirm Password <span className="text-[#C8782A]">*</span>
-                      </Label>
-                      <div className="relative">
-                        <Input
-                          id="reg-confirm"
-                          type={showConfirmPw ? 'text' : 'password'}
-                          autoComplete="new-password"
-                          value={form.confirmPassword}
-                          onChange={(e) => set('confirmPassword', e.target.value)}
-                          placeholder="Repeat your password"
-                          className={`border-[#C8782A]/20 focus-visible:ring-[#C8782A]/30 pr-10 ${errors.confirmPassword ? 'border-red-400' : ''}`}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowConfirmPw((v) => !v)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B3A2A]/40 hover:text-[#C8782A] transition-colors"
-                          aria-label={showConfirmPw ? 'Hide password' : 'Show password'}
-                        >
-                          {showConfirmPw ? <EyeOff size={16} /> : <Eye size={16} />}
-                        </button>
-                      </div>
-                      <FieldError msg={errors.confirmPassword} />
-                    </div>
-
-                    {/* Terms */}
-                    <div className="flex flex-col gap-1">
-                      <label className="flex items-start gap-2.5 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={form.agreeTerms}
-                          onChange={(e) => set('agreeTerms', e.target.checked)}
-                          className="mt-0.5 w-4 h-4 accent-[#C8782A] flex-shrink-0"
-                        />
-                        <span className="text-sm text-[#6B3A2A]/70 leading-relaxed">
-                          I agree to Aboriginal Jobs Canada's{' '}
-                          <a href="#" className="text-[#C8782A] hover:underline font-medium">Terms of Service</a>
-                          {' '}and{' '}
-                          <a href="#" className="text-[#C8782A] hover:underline font-medium">Privacy Policy</a>.
-                        </span>
-                      </label>
-                      <FieldError msg={errors.agreeTerms} />
+                      <Input
+                        id="reg-last"
+                        value={form.lastName}
+                        onChange={(e) => set('lastName', e.target.value)}
+                        placeholder="Last name"
+                        className={`border-[#C8782A]/20 focus-visible:ring-[#C8782A]/30 ${errors.lastName ? 'border-red-400' : ''}`}
+                      />
+                      <FieldError msg={errors.lastName} />
                     </div>
                   </div>
-                )}
-              </motion.div>
-            </AnimatePresence>
 
-            {/* Navigation buttons */}
-            <div className={`flex gap-3 px-8 pb-8 ${step > 1 ? 'justify-between' : 'justify-end'}`}>
-              {step > 1 && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={goBack}
-                  className="border-[#C8782A]/25 text-[#6B3A2A] hover:bg-[#C8782A]/5 font-medium"
-                >
-                  <ArrowLeft size={15} className="mr-1.5" /> Back
-                </Button>
+                  {/* Org name */}
+                  <div className="flex flex-col gap-1.5">
+                    <Label htmlFor="reg-org" className="text-[#6B3A2A] font-medium text-sm">
+                      Organization Name <span className="text-[#C8782A]">*</span>
+                    </Label>
+                    <Input
+                      id="reg-org"
+                      value={form.orgName}
+                      onChange={(e) => set('orgName', e.target.value)}
+                      placeholder="Your organization or company"
+                      className={`border-[#C8782A]/20 focus-visible:ring-[#C8782A]/30 ${errors.orgName ? 'border-red-400' : ''}`}
+                    />
+                    <FieldError msg={errors.orgName} />
+                  </div>
+
+                  {/* Province */}
+                  <div className="flex flex-col gap-1.5">
+                    <Label htmlFor="reg-province" className="text-[#6B3A2A] font-medium text-sm">
+                      Province / Territory <span className="text-[#C8782A]">*</span>
+                    </Label>
+                    <select
+                      id="reg-province"
+                      value={form.province}
+                      onChange={(e) => set('province', e.target.value)}
+                      className={`w-full rounded-md border bg-white px-3 py-2 text-sm text-[#1C1C1C] focus:outline-none focus:ring-2 focus:ring-[#C8782A]/30 ${errors.province ? 'border-red-400' : 'border-[#C8782A]/20'}`}
+                    >
+                      <option value="">Select province / territory</option>
+                      {PROVINCES.map((p) => <option key={p}>{p}</option>)}
+                    </select>
+                    <FieldError msg={errors.province} />
+                  </div>
+                </div>
               )}
+
+              {/* ── STEP 2: Credentials ───────────────────────────── */}
+              {step === 2 && (
+                <div className="flex flex-col gap-5">
+                  {/* Server error */}
+                  {serverError && (
+                    <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3">
+                      <AlertCircle size={15} className="flex-shrink-0" />
+                      {serverError}
+                    </div>
+                  )}
+                  {/* Email */}
+                  <div className="flex flex-col gap-1.5">
+                    <Label htmlFor="reg-email" className="text-[#6B3A2A] font-medium text-sm">
+                      Email Address <span className="text-[#C8782A]">*</span>
+                    </Label>
+                    <Input
+                      id="reg-email"
+                      type="email"
+                      autoComplete="email"
+                      value={form.email}
+                      onChange={(e) => set('email', e.target.value)}
+                      placeholder="your@email.com"
+                      className={`border-[#C8782A]/20 focus-visible:ring-[#C8782A]/30 ${errors.email ? 'border-red-400' : ''}`}
+                    />
+                    <FieldError msg={errors.email} />
+                  </div>
+
+                  {/* Password */}
+                  <div className="flex flex-col gap-1.5">
+                    <Label htmlFor="reg-password" className="text-[#6B3A2A] font-medium text-sm">
+                      Password <span className="text-[#C8782A]">*</span>
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        id="reg-password"
+                        type={showPw ? 'text' : 'password'}
+                        autoComplete="new-password"
+                        value={form.password}
+                        onChange={(e) => set('password', e.target.value)}
+                        placeholder="Create a strong password"
+                        className={`border-[#C8782A]/20 focus-visible:ring-[#C8782A]/30 pr-10 ${errors.password ? 'border-red-400' : ''}`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPw((v) => !v)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B3A2A]/40 hover:text-[#C8782A] transition-colors"
+                        aria-label={showPw ? 'Hide password' : 'Show password'}
+                      >
+                        {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
+                    <PasswordStrength password={form.password} />
+                    <FieldError msg={errors.password} />
+                  </div>
+
+                  {/* Confirm password */}
+                  <div className="flex flex-col gap-1.5">
+                    <Label htmlFor="reg-confirm" className="text-[#6B3A2A] font-medium text-sm">
+                      Confirm Password <span className="text-[#C8782A]">*</span>
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        id="reg-confirm"
+                        type={showConfirmPw ? 'text' : 'password'}
+                        autoComplete="new-password"
+                        value={form.confirmPassword}
+                        onChange={(e) => set('confirmPassword', e.target.value)}
+                        placeholder="Repeat your password"
+                        className={`border-[#C8782A]/20 focus-visible:ring-[#C8782A]/30 pr-10 ${errors.confirmPassword ? 'border-red-400' : ''}`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPw((v) => !v)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B3A2A]/40 hover:text-[#C8782A] transition-colors"
+                        aria-label={showConfirmPw ? 'Hide password' : 'Show password'}
+                      >
+                        {showConfirmPw ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
+                    <FieldError msg={errors.confirmPassword} />
+                  </div>
+
+                  {/* Terms */}
+                  <div className="flex flex-col gap-1">
+                    <label className="flex items-start gap-2.5 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={form.agreeTerms}
+                        onChange={(e) => set('agreeTerms', e.target.checked)}
+                        className="mt-0.5 w-4 h-4 accent-[#C8782A] flex-shrink-0"
+                      />
+                      <span className="text-sm text-[#6B3A2A]/70 leading-relaxed">
+                        I agree to Aboriginal Jobs Canada's{' '}
+                        <a href="#" className="text-[#C8782A] hover:underline font-medium">Terms of Service</a>
+                        {' '}and{' '}
+                        <a href="#" className="text-[#C8782A] hover:underline font-medium">Privacy Policy</a>.
+                      </span>
+                    </label>
+                    <FieldError msg={errors.agreeTerms} />
+                  </div>
+                </div>
+              )}
+
+              {/* ── STEP 3: OTP Verification ─────────────────────── */}
+              {step === 3 && (
+                <div className="flex flex-col items-center gap-5">
+                  <div className="w-12 h-12 rounded-full bg-[#C8782A]/10 flex items-center justify-center">
+                    <Lock size={20} className="text-[#C8782A]" />
+                  </div>
+
+                  <div className="text-center">
+                    <h3 className="font-bold text-lg text-[#1C1C1C]">Enter Verification Code</h3>
+                    <p className="text-xs text-[#6B3A2A]/60 mt-1 max-w-xs mx-auto leading-relaxed">
+                      We sent a 6-digit verification code to
+                    </p>
+                    <p className="text-sm text-[#C8782A] font-semibold mt-0.5">{form.email}</p>
+                  </div>
+
+                  {otpSentMsg && (
+                    <div className="text-center text-xs text-green-600 bg-green-50 border border-green-200 py-1.5 px-3 rounded-lg w-full">
+                      {otpSentMsg}
+                    </div>
+                  )}
+
+                  {serverError && (
+                    <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3 w-full">
+                      <AlertCircle size={15} className="flex-shrink-0" />
+                      {serverError}
+                    </div>
+                  )}
+
+                  {/* Stunning InputOTP Slot Component */}
+                  <div className="my-3">
+                    <InputOTP
+                      maxLength={6}
+                      value={otpVal}
+                      onChange={setOtpVal}
+                      disabled={loading}
+                    >
+                      <InputOTPGroup>
+                        <InputOTPSlot index={0} className="border-[#C8782A]/30 focus:border-[#C8782A]" />
+                        <InputOTPSlot index={1} className="border-[#C8782A]/30 focus:border-[#C8782A]" />
+                        <InputOTPSlot index={2} className="border-[#C8782A]/30 focus:border-[#C8782A]" />
+                      </InputOTPGroup>
+                      <InputOTPSeparator />
+                      <InputOTPGroup>
+                        <InputOTPSlot index={3} className="border-[#C8782A]/30 focus:border-[#C8782A]" />
+                        <InputOTPSlot index={4} className="border-[#C8782A]/30 focus:border-[#C8782A]" />
+                        <InputOTPSlot index={5} className="border-[#C8782A]/30 focus:border-[#C8782A]" />
+                      </InputOTPGroup>
+                    </InputOTP>
+                  </div>
+
+                  {/* Resend timer */}
+                  <div className="text-center w-full">
+                    {otpCountdown > 0 ? (
+                      <p className="text-xs text-[#6B3A2A]/50">
+                        Resend code in <span className="font-semibold text-[#6B3A2A]">{otpCountdown}s</span>
+                      </p>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleResendOtp}
+                        disabled={loading}
+                        className="inline-flex items-center gap-1.5 text-xs text-[#C8782A] hover:text-[#B06820] font-semibold transition-colors disabled:opacity-50"
+                      >
+                        <RefreshCw size={12} className={loading ? "animate-spin" : ""} />
+                        Resend Verification Code
+                      </button>
+                    )}
+                  </div>
+
+                  {/* {devOtp && (
+                    <div className="w-full bg-[#FAF5EE] border border-[#C8782A]/20 rounded-xl p-3.5 text-left mt-2">
+                      <p className="text-[10px] font-bold text-[#C8782A] uppercase tracking-wider mb-1">
+                        🛠️ Development Sandbox Mode
+                      </p>
+                      <p className="text-xs text-[#6B3A2A]/70 leading-relaxed">
+                        SMTP credentials not configured. Code logged to terminal console.
+                      </p>
+                      <p className="text-xs font-semibold mt-1">
+                        Use this code to test: <span className="text-[#C8782A] font-mono text-sm tracking-wider font-bold">{devOtp}</span>
+                      </p>
+                    </div>
+                  )} */}
+                </div>
+              )}
+            </motion.div>
+          </AnimatePresence>
+
+          {/* Navigation buttons */}
+          <div className={`flex gap-3 px-8 pb-8 ${step > 1 ? 'justify-between' : 'justify-end'}`}>
+            {step > 1 && (
               <Button
                 type="button"
-                onClick={goNext}
+                variant="outline"
+                onClick={goBack}
                 disabled={loading}
-                className={`font-semibold px-8 text-white transition-all duration-200 ${
-                  isEmployer
-                    ? 'bg-[#6B3A2A] hover:bg-[#5A2F1F]'
-                    : 'bg-[#C8782A] hover:bg-[#B06820]'
-                }`}
+                className="border-[#C8782A]/25 text-[#6B3A2A] hover:bg-[#C8782A]/5 font-medium"
               >
-                {loading ? (
-                  <span className="flex items-center gap-2">
-                    <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-                    </svg>
-                    Creating…
-                  </span>
-                ) : step === 3 ? (
-                  <span className="flex items-center gap-1.5">
-                    Create Account <CheckCircle size={15} />
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-1.5">
-                    Continue <ChevronRight size={15} />
-                  </span>
-                )}
+                <ArrowLeft size={15} className="mr-1.5" /> Back
               </Button>
-            </div>
+            )}
+            <Button
+              type="button"
+              onClick={goNext}
+              disabled={loading}
+              className="font-semibold px-8 text-white transition-all duration-200 bg-[#6B3A2A] hover:bg-[#5A2F1F]"
+            >
+              {loading ? (
+                <span className="flex items-center gap-2">
+                  <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                  </svg>
+                  Processing…
+                </span>
+              ) : step === 3 ? (
+                <span className="flex items-center gap-1.5">
+                  Verify & Register <CheckCircle size={15} />
+                </span>
+              ) : (
+                <span className="flex items-center gap-1.5">
+                  Continue <ChevronRight size={15} />
+                </span>
+              )}
+            </Button>
           </div>
+        </div>
 
-          <p className="text-center text-sm text-[#6B3A2A]/60 mt-5">
-            Already have an account?{' '}
-            <Link href="/login" className="text-[#C8782A] font-semibold hover:underline">
-              Sign in
-            </Link>
-          </p>
-        </motion.div>
-      </section>
-    </>
+        <p className="text-center text-sm text-[#6B3A2A]/60 mt-5">
+          Already have an account?{' '}
+          <Link href="/login" className="text-[#C8782A] font-semibold hover:underline">
+            Sign in
+          </Link>
+        </p>
+      </motion.div>
+    </section>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={
+      <div className="bg-[#FAF5EE] min-h-[85vh] flex items-center justify-center py-16 px-4">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C8782A]" />
+      </div>
+    }>
+      <RegisterForm />
+    </Suspense>
   );
 }

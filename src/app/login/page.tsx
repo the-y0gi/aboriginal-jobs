@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'motion/react';
@@ -10,7 +10,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { signIn } from '@/lib/auth/auth-client';
 
-/* ── Animation ─────────────────────────────────────────────────────── */
 
 /* ── Logo mark ──────────────────────────────────────────────────────── */
 function LogoMark() {
@@ -49,7 +48,7 @@ function FieldError({ msg }: { msg?: string }) {
 }
 
 /* ── Main page ──────────────────────────────────────────────────────── */
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const from = searchParams.get('from') || '/';
@@ -74,7 +73,7 @@ export default function LoginPage() {
       if (result.error) {
         setServerError(result.error.message || 'Invalid email or password.');
       } else {
-        router.push(from, { replace: true });
+        router.replace(from);
       }
     } catch {
       setServerError('Something went wrong. Please try again.');
@@ -216,7 +215,8 @@ export default function LoginPage() {
           </div>
 
           {/* Quick register links */}
-          <div className="mt-5 grid grid-cols-2 gap-3">
+          <div className="mt-5 flex flex-col gap-3">
+            {/* Job Seeker signup commented out as not required
             <Link href="/register?type=jobseeker">
               <Button
                 variant="outline"
@@ -225,7 +225,8 @@ export default function LoginPage() {
                 Job Seeker Sign Up
               </Button>
             </Link>
-            <Link href="/register?type=employer">
+            */}
+            <Link href="/register?type=employer" className="w-full">
               <Button
                 variant="outline"
                 className="w-full border-[#6B3A2A]/25 text-[#6B3A2A] hover:bg-[#6B3A2A]/5 hover:border-[#6B3A2A]/50 text-sm font-medium"
@@ -244,5 +245,17 @@ export default function LoginPage() {
         </motion.div>
       </section>
     </>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="bg-[#FAF5EE] min-h-[85vh] flex items-center justify-center py-16 px-4">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C8782A]" />
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   );
 }

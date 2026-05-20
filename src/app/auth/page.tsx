@@ -12,7 +12,7 @@
  *   <AuthPage mode="login" providers={['google']} />    // Both email + OAuth
  */
 
-import { useState, FormEvent, ReactElement } from 'react';
+import { useState, FormEvent, ReactElement, Suspense } from 'react';
 import { useRouter, useSearchParams, redirect } from 'next/navigation';
 import { signIn, signUp, useSession } from '@/lib/auth/auth-client';
 
@@ -72,17 +72,18 @@ const PROVIDER_CONFIG: Record<string, { name: string; icon: ReactElement; bg: st
   },
 };
 
-interface AuthPageProps {
-  mode?: 'login' | 'signup';
-  providers?: string[];
-}
-
-export default function AuthPage({ mode, providers }: AuthPageProps) {
+function AuthForm() {
   const { isAuthenticated, isPending } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
-  // Restore the page the user tried to visit before being redirected to login
   const from = searchParams.get('from') || '/';
+
+  const modeParam = searchParams.get('mode');
+  const mode = (modeParam === 'login' || modeParam === 'signup') ? modeParam : undefined;
+
+  const providersParam = searchParams.get('providers');
+  const providers = providersParam ? providersParam.split(',') : undefined;
+
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -128,7 +129,7 @@ export default function AuthPage({ mode, providers }: AuthPageProps) {
         setError(result.error.message || 'Authentication failed');
         return;
       }
-      router.push(from, { replace: true });
+      router.replace(from);
     } catch {
       setError('An error occurred.');
     } finally {
@@ -257,6 +258,18 @@ export default function AuthPage({ mode, providers }: AuthPageProps) {
         )}
       </div>
     </div>
+  );
+}
+
+export default function AuthPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+      </div>
+    }>
+      <AuthForm />
+    </Suspense>
   );
 }
 

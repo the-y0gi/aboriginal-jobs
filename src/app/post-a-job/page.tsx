@@ -5,7 +5,9 @@ import Link from 'next/link';
 import { motion } from 'motion/react';
 import {
   Briefcase, CheckCircle, ArrowRight, ChevronRight,
-  Send, Info, AlertCircle,
+  Send, Info, AlertCircle, XCircle, Mail, Phone, MapPin, Building2, Plus, Trash2,
+  Mailbox,
+
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,37 +23,15 @@ const fadeUp = {
 };
 const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.09 } } };
 
-/* ── Package data ───────────────────────────────────────────────────── */
-const packages = [
-  {
-    id: 'basic',
-    name: 'Basic Job Posting',
-    desc: 'Single listing · 30-day active · standard visibility',
-    featured: false,
-    popular: false,
-  },
-  {
-    id: 'featured',
-    name: 'Featured Job Posting',
-    desc: 'Priority placement · 60-day active · highlighted listing',
-    featured: true,
-    popular: true,
-  },
-  {
-    id: 'branding',
-    name: 'Employer Branding Package',
-    desc: 'Company profile · multiple listings · logo placement',
-    featured: true,
-    popular: false,
-  },
-  {
-    id: 'monthly',
-    name: 'Monthly Hiring Support',
-    desc: 'Unlimited postings · dedicated support · full management',
-    featured: true,
-    popular: false,
-  },
-];
+/* ── Types for Apply Methods ────────────────────────────────────────── */
+interface ApplyMethod {
+  method: 'email' | 'phone' | 'mail' | 'inPerson';
+  email?: string;
+  phone?: string;
+  mailAddress?: string;
+  inPersonAddress?: string;
+  inPersonTiming?: string;
+}
 
 const employmentTypes = [
   'Full-time',
@@ -84,6 +64,7 @@ const jobCategories = [
   'Science & Research',
   'Security & Law Enforcement',
   'Transportation & Logistics',
+  'Restaurant & Food Service'
 ];
 
 const provinces = [
@@ -120,6 +101,130 @@ function SectionHeading({ step, title }: { step: number; title: string }) {
   );
 }
 
+/* ── Apply Method Card Component ────────────────────────────────────── */
+function ApplyMethodCard({
+  method,
+  data,
+  onChange,
+  onRemove,
+  isRemovable,
+}: {
+  method: string;
+  data: ApplyMethod;
+  onChange: (field: string, value: string) => void;
+  onRemove?: () => void;
+  isRemovable: boolean;
+}) {
+  const getIcon = () => {
+    switch (method) {
+      case 'email': return <Mail size={16} className="text-[#C8782A]" />;
+      case 'phone': return <Phone size={16} className="text-[#C8782A]" />;
+      case 'mail': return <MapPin size={16} className="text-[#C8782A]" />;
+      case 'inPerson': return <Building2 size={16} className="text-[#C8782A]" />;
+      default: return null;
+    }
+  };
+
+  const getTitle = () => {
+    switch (method) {
+      case 'email': return 'Apply by Email';
+      case 'phone': return 'Apply by Phone';
+      case 'mail': return 'Apply by Mail';
+      case 'inPerson': return 'Apply in Person';
+      default: return method;
+    }
+  };
+
+  return (
+    <div className="bg-[#FAF5EE] rounded-xl p-4 border border-[#C8782A]/15 relative">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          {getIcon()}
+          <h3 className="font-semibold text-sm text-[#1C1C1C]">{getTitle()}</h3>
+        </div>
+        {isRemovable && onRemove && (
+          <button
+            type="button"
+            onClick={onRemove}
+            className="text-red-500 hover:text-red-700 transition-colors"
+          >
+            <Trash2 size={14} />
+          </button>
+        )}
+      </div>
+
+      <div className="space-y-3">
+        {method === 'email' && (
+          <div>
+            <Label className="text-xs text-[#6B3A2A] font-medium">Email Address *</Label>
+            <Input
+              type="email"
+              value={data.email || ''}
+              onChange={(e) => onChange('email', e.target.value)}
+              placeholder="jobs@company.com"
+              className="mt-1 border-[#C8782A]/20"
+              required
+            />
+          </div>
+        )}
+
+        {method === 'phone' && (
+          <div>
+            <Label className="text-xs text-[#6B3A2A] font-medium">Phone Number *</Label>
+            <Input
+              type="tel"
+              value={data.phone || ''}
+              onChange={(e) => onChange('phone', e.target.value)}
+              placeholder="+1 (555) 123-4567"
+              className="mt-1 border-[#C8782A]/20"
+              required
+            />
+          </div>
+        )}
+
+        {method === 'mail' && (
+          <div>
+            <Label className="text-xs text-[#6B3A2A] font-medium">Mailing Address *</Label>
+            <Input
+              value={data.mailAddress || ''}
+              onChange={(e) => onChange('mailAddress', e.target.value)}
+              placeholder="123 Street Name, City, Province, Postal Code"
+              className="mt-1 border-[#C8782A]/20"
+              required
+            />
+          </div>
+        )}
+
+        {method === 'inPerson' && (
+          <>
+            <div>
+              <Label className="text-xs text-[#6B3A2A] font-medium">Office Address *</Label>
+              <Input
+                value={data.inPersonAddress || ''}
+                onChange={(e) => onChange('inPersonAddress', e.target.value)}
+                placeholder="123 Business Ave, Suite 100, City, Province"
+                className="mt-1 border-[#C8782A]/20"
+                required
+              />
+            </div>
+            <div>
+              <Label className="text-xs text-[#6B3A2A] font-medium">Available Hours / Time Slots *</Label>
+              <Input
+                value={data.inPersonTiming || ''}
+                onChange={(e) => onChange('inPersonTiming', e.target.value)}
+                placeholder="Monday-Friday, 9AM to 5PM"
+                className="mt-1 border-[#C8782A]/20"
+                required
+              />
+              <p className="text-xs text-[#6B3A2A]/50 mt-1">Example: Monday-Friday, 9AM-5PM or Drop off resume between 10AM-2PM</p>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 /* ── Main page ──────────────────────────────────────────────────────── */
 export default function PostAJobPage() {
   /* Form state */
@@ -130,19 +235,107 @@ export default function PostAJobPage() {
   const [employmentType, setEmploymentType] = useState('');
   const [category, setCategory] = useState('');
   const [salary, setSalary] = useState('');
-  const [email, setEmail] = useState('');
+  const [salaryType, setSalaryType] = useState('hour');
+  const [nocCode, setNocCode] = useState('');
+  const [runDays, setRunDays] = useState('30');
+  const [experience, setExperience] = useState('');
+  const [startDate, setStartDate] = useState('');
   const [website, setWebsite] = useState('');
   const [descHtml, setDescHtml] = useState('');
   const [reqHtml, setReqHtml] = useState('');
   const [indigenous, setIndigenous] = useState(false);
   const [remote, setRemote] = useState(false);
-  const [selectedPkg, setSelectedPkg] = useState('featured');
+
+  /* Apply Methods State */
+  const [applyMethods, setApplyMethods] = useState<ApplyMethod[]>([]);
+  const [selectedMethodToAdd, setSelectedMethodToAdd] = useState<string>('');
+
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [serverError, setServerError] = useState('');
 
+  /* Validation errors */
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+
+  /* Helper to mark field as touched */
+  const markTouched = (field: string) => {
+    setTouched(prev => ({ ...prev, [field]: true }));
+  };
+
+  /* Add new apply method */
+  const addApplyMethod = () => {
+    if (!selectedMethodToAdd) return;
+    if (applyMethods.some(m => m.method === selectedMethodToAdd)) {
+      setErrors(prev => ({ ...prev, applyMethods: `Already added ${selectedMethodToAdd} method` }));
+      return;
+    }
+    setApplyMethods([...applyMethods, { method: selectedMethodToAdd as ApplyMethod['method'] }]);
+    setSelectedMethodToAdd('');
+    setErrors(prev => ({ ...prev, applyMethods: '' }));
+  };
+
+  /* Remove apply method */
+  const removeApplyMethod = (index: number) => {
+    setApplyMethods(applyMethods.filter((_, i) => i !== index));
+  };
+
+  /* Update apply method data */
+  const updateApplyMethod = (index: number, field: string, value: string) => {
+    const updated = [...applyMethods];
+    updated[index] = { ...updated[index], [field]: value };
+    setApplyMethods(updated);
+  };
+
+  /* Validation function */
+  const validateForm = useCallback((): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    if (!title.trim()) newErrors.title = 'Job title is required';
+    if (!company.trim()) newErrors.company = 'Company name is required';
+    if (!city.trim()) newErrors.city = 'City is required';
+    if (!province) newErrors.province = 'Province is required';
+    if (!employmentType) newErrors.employmentType = 'Employment type is required';
+    if (!category) newErrors.category = 'Job category is required';
+    if (!nocCode.trim()) newErrors.nocCode = 'NOC code is required';
+    if (!descHtml.trim() || descHtml === '<p></p>' || descHtml === '<p><br></p>') {
+      newErrors.description = 'Job description is required';
+    }
+    if (!reqHtml.trim() || reqHtml === '<p></p>' || reqHtml === '<p><br></p>') {
+      newErrors.requirements = 'Qualifications & Requirements are required';
+    }
+
+    // Validate apply methods
+    if (applyMethods.length === 0) {
+      newErrors.applyMethods = 'At least one application method is required';
+    } else {
+      for (let i = 0; i < applyMethods.length; i++) {
+        const method = applyMethods[i];
+        if (method.method === 'email' && !method.email?.trim()) {
+          newErrors[`applyMethod_${i}`] = 'Email is required for email application';
+        }
+        if (method.method === 'phone' && !method.phone?.trim()) {
+          newErrors[`applyMethod_${i}`] = 'Phone number is required for phone application';
+        }
+        if (method.method === 'mail' && !method.mailAddress?.trim()) {
+          newErrors[`applyMethod_${i}`] = 'Mail address is required for mail application';
+        }
+        if (method.method === 'inPerson') {
+          if (!method.inPersonAddress?.trim()) {
+            newErrors[`applyMethod_${i}`] = 'Address is required for in-person application';
+          }
+          if (!method.inPersonTiming?.trim()) {
+            newErrors[`applyMethod_${i}`] = 'Time schedule is required for in-person application';
+          }
+        }
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  }, [title, company, city, province, employmentType, category, nocCode, descHtml, reqHtml, applyMethods]);
+
   /* Derived preview data */
-  const selectedPackage = packages.find((p) => p.id === selectedPkg)!;
   const location = [city, province].filter(Boolean).join(', ');
 
   const previewData: JobPostingData = {
@@ -151,23 +344,54 @@ export default function PostAJobPage() {
     location,
     employmentType,
     salary,
+    salaryType,
     descriptionHtml: descHtml,
     requirementsHtml: reqHtml,
     indigenous,
     remote,
-    packageName: selectedPackage?.name ?? '',
-    featured: selectedPackage?.featured ?? false,
+    packageName: 'Job Posting',
+    featured: false,
+    nocCode,
+    runDays,
+    experience,
+    startDate,
+    category,
+    website,
+    applyMethods, // Pass to preview
   };
 
-  const handleDescChange = useCallback((_: string) => {}, []);
-  const handleDescHtml = useCallback((html: string) => setDescHtml(html), []);
-  const handleReqChange = useCallback((_: string) => {}, []);
-  const handleReqHtml = useCallback((html: string) => setReqHtml(html), []);
+  const handleDescChange = useCallback((text: string) => { }, []);
+  const handleDescHtml = useCallback((html: string) => {
+    setDescHtml(html);
+    if (errors.description && html.trim() && html !== '<p></p>' && html !== '<p><br></p>') {
+      setErrors(prev => ({ ...prev, description: '' }));
+    }
+  }, [errors.description]);
+
+  const handleReqChange = useCallback((text: string) => { }, []);
+  const handleReqHtml = useCallback((html: string) => {
+    setReqHtml(html);
+    if (errors.requirements && html.trim() && html !== '<p></p>' && html !== '<p><br></p>') {
+      setErrors(prev => ({ ...prev, requirements: '' }));
+    }
+  }, [errors.requirements]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const allFields = ['title', 'company', 'city', 'province', 'employmentType', 'category', 'nocCode'];
+    const touchedObj: Record<string, boolean> = {};
+    allFields.forEach(field => { touchedObj[field] = true; });
+    setTouched(touchedObj);
+
+    if (!validateForm()) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
     setServerError('');
     setLoading(true);
+
     try {
       const res = await fetch('/api/jobs', {
         method: 'POST',
@@ -179,20 +403,29 @@ export default function PostAJobPage() {
           province,
           employmentType,
           salary,
+          salaryType,
           category,
+          nocCode,
+          runDays,
+          experience,
+          startDate,
           descriptionHtml: descHtml,
           requirementsHtml: reqHtml,
           indigenousOwned: indigenous,
-          contactEmail: email,
+          remote,
           website,
-          package: selectedPkg,
+          applyMethods,
+          postDate: new Date().toISOString(),
         }),
       });
-      const data = await res.json() as { error?: string; success?: boolean };
+
+      const data = await res.json();
+
       if (!res.ok) {
         setServerError(data.error || 'Failed to submit job posting. Please try again.');
         return;
       }
+
       setSubmitted(true);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch {
@@ -202,72 +435,66 @@ export default function PostAJobPage() {
     }
   };
 
-  /* ── Success state ─────────────────────────────────────────────── */
+  /* Success state */
   if (submitted) {
     return (
-      <>
-        <section className="bg-[#FAF5EE] min-h-[70vh] flex items-center justify-center py-20 px-4">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5 }}
-            className="max-w-lg w-full bg-white rounded-3xl p-10 border border-[#C8782A]/10 text-center shadow-lg"
-          >
-            <div className="w-16 h-16 rounded-full bg-[#7A9E7E]/15 flex items-center justify-center mx-auto mb-6">
-              <CheckCircle size={32} className="text-[#7A9E7E]" />
-            </div>
-            <h1
-              className="text-3xl font-bold text-[#1C1C1C] mb-3"
-              style={{ fontFamily: "'Playfair Display', serif" }}
-            >
-              Posting Submitted!
-            </h1>
-            <p className="text-[#6B3A2A]/70 leading-relaxed mb-2">
-              Thank you, <strong>{company || 'your organization'}</strong>. Your job posting for{' '}
-              <strong>{title || 'the role'}</strong> has been received.
-            </p>
-            <p className="text-[#6B3A2A]/60 text-sm mb-8">
-              Our team will review your listing and confirm within 1 business day. We'll reach out
-              to <strong>{email}</strong> with next steps.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Link href="/employers">
-                <Button className="bg-[#C8782A] hover:bg-[#B06820] text-white font-semibold px-8">
-                  Employer Dashboard
-                </Button>
-              </Link>
-              <Button
-                variant="outline"
-                className="border-[#C8782A]/30 text-[#6B3A2A] hover:bg-[#C8782A]/5"
-                onClick={() => { setSubmitted(false); setServerError(''); setCategory(''); }}
-              >
-                Post Another Job
+      <section className="bg-[#FAF5EE] min-h-[70vh] flex items-center justify-center py-20 px-4">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+          className="max-w-lg w-full bg-white rounded-3xl p-6 sm:p-10 border border-[#C8782A]/10 text-center shadow-lg mx-4"
+        >
+          <div className="w-16 h-16 rounded-full bg-[#7A9E7E]/15 flex items-center justify-center mx-auto mb-6">
+            <CheckCircle size={32} className="text-[#7A9E7E]" />
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-[#1C1C1C] mb-3" style={{ fontFamily: "'Playfair Display', serif" }}>
+            Posting Submitted!
+          </h1>
+          <p className="text-[#6B3A2A]/70 leading-relaxed mb-2">
+            Thank you, <strong>{company || 'your organization'}</strong>. Your job posting for{' '}
+            <strong>{title || 'the role'}</strong> has been received.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center mt-6">
+            <Link href="/employers" className="w-full sm:w-auto">
+              <Button className="bg-[#C8782A] hover:bg-[#B06820] text-white font-semibold px-8 w-full sm:w-auto">
+                Employer Dashboard
               </Button>
-            </div>
-          </motion.div>
-        </section>
-      </>
+            </Link>
+            <Button
+              variant="outline"
+              className="border-[#C8782A]/30 text-[#6B3A2A] hover:bg-[#C8782A]/5 w-full sm:w-auto"
+              onClick={() => {
+                setSubmitted(false);
+                setServerError('');
+                setTitle('');
+                setCompany('');
+                setCity('');
+                setProvince('');
+                setEmploymentType('');
+                setSalary('');
+                setNocCode('');
+                setDescHtml('');
+                setReqHtml('');
+                setApplyMethods([]);
+              }}
+            >
+              Post Another Job
+            </Button>
+          </div>
+        </motion.div>
+      </section>
     );
   }
 
-  /* ── Main form ─────────────────────────────────────────────────── */
+  /* Main form */
   return (
     <>
       {/* Hero */}
-      <section className="bg-[#FAF5EE] py-14 lg:py-20 relative overflow-hidden">
-        <div
-          className="absolute -right-24 top-1/2 -translate-y-1/2 w-[420px] h-[420px] text-[#C8782A] pointer-events-none opacity-30"
-          aria-hidden="true"
-        >
-          <svg viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="200" cy="200" r="180" stroke="currentColor" strokeWidth="1" opacity="0.4" />
-            <circle cx="200" cy="200" r="120" stroke="currentColor" strokeWidth="1" opacity="0.3" />
-            <circle cx="200" cy="200" r="60" fill="currentColor" opacity="0.1" />
-          </svg>
-        </div>
+      <section className="bg-[#FAF5EE] py-12 lg:py-20 relative overflow-hidden">
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div variants={stagger} initial="hidden" animate="visible">
-            <motion.div variants={fadeUp} className="flex items-center gap-2 text-sm text-[#6B3A2A]/60 mb-4">
+            <motion.div variants={fadeUp} className="flex items-center gap-2 text-sm text-[#6B3A2A]/60 mb-4 flex-wrap">
               <Link href="/employers" className="hover:text-[#C8782A] transition-colors">Employers</Link>
               <ChevronRight size={14} />
               <span className="text-[#C8782A] font-medium">Post a Job</span>
@@ -277,12 +504,12 @@ export default function PostAJobPage() {
             </motion.p>
             <motion.h1
               variants={fadeUp}
-              className="text-5xl lg:text-6xl font-bold text-[#1C1C1C] mb-4 leading-tight"
+              className="text-4xl sm:text-5xl lg:text-6xl font-bold text-[#1C1C1C] mb-4 leading-tight"
               style={{ fontFamily: "'Playfair Display', serif" }}
             >
               Post a Job
             </motion.h1>
-            <motion.p variants={fadeUp} className="text-[#6B3A2A]/70 text-lg max-w-xl leading-relaxed">
+            <motion.p variants={fadeUp} className="text-[#6B3A2A]/70 text-base sm:text-lg max-w-xl leading-relaxed">
               Reach thousands of qualified Indigenous job seekers across Canada. Fill in your details
               and watch your listing come to life in the preview.
             </motion.p>
@@ -293,61 +520,19 @@ export default function PostAJobPage() {
       {/* Form + Sidebar */}
       <section className="bg-white py-10 lg:py-14 pb-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 xl:grid-cols-[1fr_380px] gap-8 items-start">
-
-            {/* ── LEFT: Form ──────────────────────────────────────────── */}
+          <div className="flex flex-col xl:flex-row gap-8">
+            {/* LEFT: Form */}
             <motion.form
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
               onSubmit={handleSubmit}
-              className="flex flex-col gap-8"
+              className="flex-1 flex flex-col gap-8"
+              noValidate
             >
-              {/* Step 1 — Package */}
-              <div className="bg-[#FAF5EE] rounded-3xl p-7 lg:p-9 border border-[#C8782A]/10">
-                <SectionHeading step={1} title="Choose a Package" />
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {packages.map((pkg) => (
-                    <label
-                      key={pkg.id}
-                      className={`flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 ${
-                        selectedPkg === pkg.id
-                          ? 'border-[#C8782A] bg-white shadow-sm'
-                          : 'border-[#C8782A]/15 bg-white hover:border-[#C8782A]/40'
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="package"
-                        value={pkg.id}
-                        checked={selectedPkg === pkg.id}
-                        onChange={() => setSelectedPkg(pkg.id)}
-                        className="mt-1 accent-[#C8782A]"
-                      />
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-semibold text-[#1C1C1C] text-sm">{pkg.name}</span>
-                          {pkg.popular && (
-                            <span className="text-xs bg-[#C8782A] text-white px-2 py-0.5 rounded-full font-semibold">
-                              Popular
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-xs text-[#6B3A2A]/60 mt-0.5 leading-relaxed">{pkg.desc}</p>
-                      </div>
-                    </label>
-                  ))}
-                </div>
-                <Link href="/pricing"
-                  className="inline-flex items-center gap-1.5 text-[#C8782A] text-sm font-semibold mt-4 hover:gap-2.5 transition-all duration-200"
-                >
-                  Compare all packages <ArrowRight size={13} />
-                </Link>
-              </div>
-
-              {/* Step 2 — Job Details */}
-              <div className="bg-white rounded-3xl p-7 lg:p-9 border border-[#C8782A]/10">
-                <SectionHeading step={2} title="Job Details" />
+              {/* Step 1 — Job Details */}
+              <div className="bg-white rounded-3xl p-5 sm:p-7 lg:p-9 border border-[#C8782A]/10">
+                <SectionHeading step={1} title="Job Details" />
                 <div className="flex flex-col gap-5">
                   {/* Title */}
                   <div className="flex flex-col gap-2">
@@ -358,13 +543,25 @@ export default function PostAJobPage() {
                       id="job-title"
                       required
                       value={title}
-                      onChange={(e) => setTitle(e.target.value)}
+                      onChange={(e) => {
+                        setTitle(e.target.value);
+                        if (errors.title && e.target.value.trim()) {
+                          setErrors(prev => ({ ...prev, title: '' }));
+                        }
+                      }}
+                      onBlur={(e) => {
+                        markTouched('title');
+                        if (!e.target.value.trim()) setErrors(prev => ({ ...prev, title: 'Job title is required' }));
+                      }}
                       placeholder="e.g. Community Health Worker"
-                      className="border-[#C8782A]/20 focus-visible:ring-[#C8782A]/30"
+                      className={`border-[#C8782A]/20 focus-visible:ring-[#C8782A]/30 ${errors.title && touched.title ? 'border-red-500' : ''}`}
                     />
+                    {errors.title && touched.title && (
+                      <p className="text-xs text-red-500 flex items-center gap-1 mt-1"><XCircle size={12} /> {errors.title}</p>
+                    )}
                   </div>
 
-                  {/* Company + Email */}
+                  {/* Company + Website */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     <div className="flex flex-col gap-2">
                       <Label htmlFor="company" className="text-[#6B3A2A] font-medium text-sm">
@@ -374,15 +571,23 @@ export default function PostAJobPage() {
                         id="company"
                         required
                         value={company}
-                        onChange={(e) => setCompany(e.target.value)}
+                        onChange={(e) => {
+                          setCompany(e.target.value);
+                          if (errors.company && e.target.value.trim()) {
+                            setErrors(prev => ({ ...prev, company: '' }));
+                          }
+                        }}
+                        onBlur={(e) => {
+                          markTouched('company');
+                          if (!e.target.value.trim()) setErrors(prev => ({ ...prev, company: 'Company name is required' }));
+                        }}
                         placeholder="Your organization name"
-                        className="border-[#C8782A]/20 focus-visible:ring-[#C8782A]/30"
+                        className={`border-[#C8782A]/20 focus-visible:ring-[#C8782A]/30 ${errors.company && touched.company ? 'border-red-500' : ''}`}
                       />
+                      {errors.company && touched.company && <p className="text-xs text-red-500 flex items-center gap-1 mt-1"><XCircle size={12} /> {errors.company}</p>}
                     </div>
                     <div className="flex flex-col gap-2">
-                      <Label htmlFor="website" className="text-[#6B3A2A] font-medium text-sm">
-                        Website (optional)
-                      </Label>
+                      <Label htmlFor="website" className="text-[#6B3A2A] font-medium text-sm">Website (optional)</Label>
                       <Input
                         id="website"
                         type="url"
@@ -404,10 +609,20 @@ export default function PostAJobPage() {
                         id="city"
                         required
                         value={city}
-                        onChange={(e) => setCity(e.target.value)}
+                        onChange={(e) => {
+                          setCity(e.target.value);
+                          if (errors.city && e.target.value.trim()) {
+                            setErrors(prev => ({ ...prev, city: '' }));
+                          }
+                        }}
+                        onBlur={(e) => {
+                          markTouched('city');
+                          if (!e.target.value.trim()) setErrors(prev => ({ ...prev, city: 'City is required' }));
+                        }}
                         placeholder="e.g. Edmonton"
-                        className="border-[#C8782A]/20 focus-visible:ring-[#C8782A]/30"
+                        className={`border-[#C8782A]/20 focus-visible:ring-[#C8782A]/30 ${errors.city && touched.city ? 'border-red-500' : ''}`}
                       />
+                      {errors.city && touched.city && <p className="text-xs text-red-500 flex items-center gap-1 mt-1"><XCircle size={12} /> {errors.city}</p>}
                     </div>
                     <div className="flex flex-col gap-2">
                       <Label htmlFor="province" className="text-[#6B3A2A] font-medium text-sm">
@@ -417,14 +632,20 @@ export default function PostAJobPage() {
                         id="province"
                         required
                         value={province}
-                        onChange={(e) => setProvince(e.target.value)}
-                        className="w-full rounded-md border border-[#C8782A]/20 bg-white px-3 py-2 text-sm text-[#1C1C1C] focus:outline-none focus:ring-2 focus:ring-[#C8782A]/30"
+                        onChange={(e) => {
+                          setProvince(e.target.value);
+                          if (errors.province && e.target.value) setErrors(prev => ({ ...prev, province: '' }));
+                        }}
+                        onBlur={(e) => {
+                          markTouched('province');
+                          if (!e.target.value) setErrors(prev => ({ ...prev, province: 'Province is required' }));
+                        }}
+                        className={`w-full rounded-md border border-[#C8782A]/20 bg-white px-3 py-2.5 text-sm text-[#1C1C1C] focus:outline-none focus:ring-2 focus:ring-[#C8782A]/30 ${errors.province && touched.province ? 'border-red-500' : ''}`}
                       >
                         <option value="">Select province / territory</option>
-                        {provinces.map((p) => (
-                          <option key={p}>{p}</option>
-                        ))}
+                        {provinces.map((p) => <option key={p}>{p}</option>)}
                       </select>
+                      {errors.province && touched.province && <p className="text-xs text-red-500 flex items-center gap-1 mt-1"><XCircle size={12} /> {errors.province}</p>}
                     </div>
                   </div>
 
@@ -438,26 +659,114 @@ export default function PostAJobPage() {
                         id="emp-type"
                         required
                         value={employmentType}
-                        onChange={(e) => setEmploymentType(e.target.value)}
-                        className="w-full rounded-md border border-[#C8782A]/20 bg-white px-3 py-2 text-sm text-[#1C1C1C] focus:outline-none focus:ring-2 focus:ring-[#C8782A]/30"
+                        onChange={(e) => {
+                          setEmploymentType(e.target.value);
+                          if (errors.employmentType && e.target.value) setErrors(prev => ({ ...prev, employmentType: '' }));
+                        }}
+                        onBlur={(e) => {
+                          markTouched('employmentType');
+                          if (!e.target.value) setErrors(prev => ({ ...prev, employmentType: 'Employment type is required' }));
+                        }}
+                        className={`w-full rounded-md border border-[#C8782A]/20 bg-white px-3 py-2.5 text-sm text-[#1C1C1C] focus:outline-none focus:ring-2 focus:ring-[#C8782A]/30 ${errors.employmentType && touched.employmentType ? 'border-red-500' : ''}`}
                       >
                         <option value="">Select type</option>
-                        {employmentTypes.map((t) => (
-                          <option key={t}>{t}</option>
-                        ))}
+                        {employmentTypes.map((t) => <option key={t}>{t}</option>)}
                       </select>
+                      {errors.employmentType && touched.employmentType && <p className="text-xs text-red-500 flex items-center gap-1 mt-1"><XCircle size={12} /> {errors.employmentType}</p>}
                     </div>
+
                     <div className="flex flex-col gap-2">
-                      <Label htmlFor="salary" className="text-[#6B3A2A] font-medium text-sm">
-                        Salary Range (optional)
+                      <Label htmlFor="salary" className="text-[#6B3A2A] font-medium text-sm">Salary (CAD)</Label>
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <Input
+                          id="salary"
+                          value={salary}
+                          onChange={(e) => setSalary(e.target.value)}
+                          placeholder="e.g. 20 - 35"
+                          className="flex-1 border-[#C8782A]/20 focus-visible:ring-[#C8782A]/30"
+                        />
+                        <select
+                          value={salaryType}
+                          onChange={(e) => setSalaryType(e.target.value)}
+                          className="rounded-md border border-[#C8782A]/20 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8782A]/30"
+                        >
+                          <option value="hour">Per Hour</option>
+                          <option value="week">Per Week</option>
+                          <option value="month">Per Month</option>
+                          <option value="year">Per Year</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* NOC Code + Run Ad For */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div className="flex flex-col gap-2">
+                      <Label htmlFor="noc-code" className="text-[#6B3A2A] font-medium text-sm">
+                        Job Code / NOC Code <span className="text-[#C8782A]">*</span>
                       </Label>
                       <Input
-                        id="salary"
-                        value={salary}
-                        onChange={(e) => setSalary(e.target.value)}
-                        placeholder="e.g. $55,000 – $70,000 / year"
+                        id="noc-code"
+                        value={nocCode}
+                        onChange={(e) => {
+                          setNocCode(e.target.value);
+                          if (errors.nocCode && e.target.value.trim()) setErrors(prev => ({ ...prev, nocCode: '' }));
+                        }}
+                        onBlur={(e) => {
+                          markTouched('nocCode');
+                          if (!e.target.value.trim()) setErrors(prev => ({ ...prev, nocCode: 'NOC code is required' }));
+                        }}
+                        placeholder="e.g. 21231"
+                        className={`border-[#C8782A]/20 focus-visible:ring-[#C8782A]/30 ${errors.nocCode && touched.nocCode ? 'border-red-500' : ''}`}
+                      />
+                      {errors.nocCode && touched.nocCode && <p className="text-xs text-red-500 flex items-center gap-1 mt-1"><XCircle size={12} /> {errors.nocCode}</p>}
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      <Label htmlFor="run-for" className="text-[#6B3A2A] font-medium text-sm">Run Ad For</Label>
+                      <select
+                        id="run-for"
+                        value={runDays}
+                        onChange={(e) => setRunDays(e.target.value)}
+                        className="w-full rounded-md border border-[#C8782A]/20 bg-white px-3 py-2.5 text-sm text-[#1C1C1C] focus:outline-none focus:ring-2 focus:ring-[#C8782A]/30"
+                      >
+                        <option value="30">30 Days</option>
+                        <option value="60">60 Days</option>
+                        <option value="90">90 Days</option>
+                        <option value="120">120 Days</option>
+                        <option value="150">150 Days</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Experience + Start Date */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div className="flex flex-col gap-2">
+                      <Label htmlFor="experience" className="text-[#6B3A2A] font-medium text-sm">Experience Required</Label>
+                      <Input
+                        id="experience"
+                        value={experience}
+                        onChange={(e) => setExperience(e.target.value)}
+                        placeholder="e.g. 2+ years"
                         className="border-[#C8782A]/20 focus-visible:ring-[#C8782A]/30"
                       />
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      <Label htmlFor="start-date" className="text-[#6B3A2A] font-medium text-sm">Expected Start Date</Label>
+                      <select
+                        id="start-date"
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
+                        className="w-full rounded-md border border-[#C8782A]/20 bg-white px-3 py-2.5 text-sm text-[#1C1C1C] focus:outline-none focus:ring-2 focus:ring-[#C8782A]/30"
+                      >
+                        <option value="">Select start date</option>
+                        <option value="asap">As Soon As Possible</option>
+                        <option value="immediate">Immediate Joining</option>
+                        <option value="1week">Within 1 Week</option>
+                        <option value="2weeks">Within 2 Weeks</option>
+                        <option value="1month">Within 1 Month</option>
+                      </select>
                     </div>
                   </div>
 
@@ -470,47 +779,45 @@ export default function PostAJobPage() {
                       id="category"
                       required
                       value={category}
-                      onChange={(e) => setCategory(e.target.value)}
-                      className="w-full rounded-md border border-[#C8782A]/20 bg-white px-3 py-2 text-sm text-[#1C1C1C] focus:outline-none focus:ring-2 focus:ring-[#C8782A]/30"
+                      onChange={(e) => {
+                        setCategory(e.target.value);
+                        if (errors.category && e.target.value) setErrors(prev => ({ ...prev, category: '' }));
+                      }}
+                      onBlur={(e) => {
+                        markTouched('category');
+                        if (!e.target.value) setErrors(prev => ({ ...prev, category: 'Job category is required' }));
+                      }}
+                      className={`w-full rounded-md border border-[#C8782A]/20 bg-white px-3 py-2.5 text-sm text-[#1C1C1C] focus:outline-none focus:ring-2 focus:ring-[#C8782A]/30 ${errors.category && touched.category ? 'border-red-500' : ''}`}
                     >
                       <option value="">Select a category</option>
-                      {jobCategories.map((c) => (
-                        <option key={c}>{c}</option>
-                      ))}
+                      {jobCategories.map((c) => <option key={c}>{c}</option>)}
                     </select>
+                    {errors.category && touched.category && <p className="text-xs text-red-500 flex items-center gap-1 mt-1"><XCircle size={12} /> {errors.category}</p>}
                   </div>
 
                   {/* Toggles */}
-                  <div className="flex flex-col sm:flex-row gap-4">
+                  <div className="flex flex-col sm:flex-row gap-4 pt-2">
                     <label className="flex items-center gap-3 cursor-pointer select-none">
-                      <Switch
-                        checked={remote}
-                        onCheckedChange={setRemote}
-                        className="data-[state=checked]:bg-[#C8782A]"
-                      />
+                      <Switch checked={remote} onCheckedChange={setRemote} className="data-[state=checked]:bg-[#C8782A]" />
                       <span className="text-sm text-[#6B3A2A] font-medium">Remote / Hybrid available</span>
                     </label>
                     <label className="flex items-center gap-3 cursor-pointer select-none">
-                      <Switch
-                        checked={indigenous}
-                        onCheckedChange={setIndigenous}
-                        className="data-[state=checked]:bg-[#7A9E7E]"
-                      />
+                      <Switch checked={indigenous} onCheckedChange={setIndigenous} className="data-[state=checked]:bg-[#7A9E7E]" />
                       <span className="text-sm text-[#6B3A2A] font-medium">Indigenous-owned organization</span>
                     </label>
                   </div>
                 </div>
               </div>
 
-              {/* Step 3 — Description */}
-              <div className="bg-white rounded-3xl p-7 lg:p-9 border border-[#C8782A]/10">
-                <SectionHeading step={3} title="Job Description" />
+              {/* Step 2 — Job Description */}
+              <div className="bg-white rounded-3xl p-5 sm:p-7 lg:p-9 border border-[#C8782A]/10">
+                <SectionHeading step={2} title="Job Description" />
                 <div className="flex flex-col gap-5">
                   <Tip>
                     Use plain, welcoming language. Describe the role, team, and what makes your
-                    organization a great place to work. Avoid jargon and list only truly essential
-                    requirements to encourage more applicants.
+                    organization a great place to work. <strong>Maximum 5000 characters per field.</strong>
                   </Tip>
+
                   <div className="flex flex-col gap-2">
                     <Label className="text-[#6B3A2A] font-medium text-sm">
                       About the Role <span className="text-[#C8782A]">*</span>
@@ -519,48 +826,87 @@ export default function PostAJobPage() {
                       placeholder="Describe the role, responsibilities, and what makes your organization a great place to work…"
                       onChange={handleDescChange}
                       onHtmlChange={handleDescHtml}
-                      minHeight={180}
+                      minHeight={200}
+                      maxLength={5000}
+                      required={true}
                     />
+                    {errors.description && <p className="text-xs text-red-500 flex items-center gap-1 mt-1"><XCircle size={12} /> {errors.description}</p>}
                   </div>
+
                   <div className="flex flex-col gap-2">
                     <Label className="text-[#6B3A2A] font-medium text-sm">
-                      Qualifications &amp; Requirements
+                      Qualifications &amp; Requirements <span className="text-[#C8782A]">*</span>
                     </Label>
                     <RichTextEditor
                       placeholder="List required skills, education, experience, and any preferred qualifications…"
                       onChange={handleReqChange}
                       onHtmlChange={handleReqHtml}
-                      minHeight={140}
+                      minHeight={160}
+                      maxLength={4000}
+                      required={true}
                     />
+                    {errors.requirements && <p className="text-xs text-red-500 flex items-center gap-1 mt-1"><XCircle size={12} /> {errors.requirements}</p>}
                   </div>
                 </div>
               </div>
 
-              {/* Step 4 — Contact */}
-              <div className="bg-white rounded-3xl p-7 lg:p-9 border border-[#C8782A]/10">
-                <SectionHeading step={4} title="Contact Information" />
+              {/* Step 3 — How to Apply Methods */}
+              <div className="bg-white rounded-3xl p-5 sm:p-7 lg:p-9 border border-[#C8782A]/10">
+                <SectionHeading step={3} title="How to Apply" />
                 <div className="flex flex-col gap-5">
-                  <div className="flex flex-col gap-2">
-                    <Label htmlFor="contact-email" className="text-[#6B3A2A] font-medium text-sm">
-                      Application Email <span className="text-[#C8782A]">*</span>
-                    </Label>
-                    <Input
-                      id="contact-email"
-                      type="email"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="applications@yourorganization.ca"
-                      className="border-[#C8782A]/20 focus-visible:ring-[#C8782A]/30"
-                    />
-                    <p className="text-xs text-[#6B3A2A]/50">
-                      Applications from job seekers will be directed to this address.
-                    </p>
-                  </div>
                   <Tip>
-                    Your contact email is kept private and is never shown publicly on the listing.
-                    Job seekers apply through Aboriginal Jobs Canada's secure application system.
+                    Select one or more methods how candidates should apply for this position.
+                    At least one method is required.
                   </Tip>
+
+                  {/* Add  dropdown */}
+                  <div className="flex flex-col sm:flex-row gap-3 items-end">
+                    <div className="flex-1">
+                      <Label className="text-xs text-[#6B3A2A] font-medium">Add Application Method</Label>
+                      <select
+                        value={selectedMethodToAdd}
+                        onChange={(e) => setSelectedMethodToAdd(e.target.value)}
+                        className="w-full rounded-md border border-[#C8782A]/20 bg-white px-3 py-2.5 text-sm text-[#1C1C1C] focus:outline-none focus:ring-2 focus:ring-[#C8782A]/30 mt-1"
+                      >
+                        <option value="">Select a method</option>
+                        <option value="email">Apply by Email</option>
+                        <option value="phone">Apply by Phone</option>
+                        <option value="mail">Apply by Mail</option>
+                        <option value="inPerson">Apply in Person</option>
+                      </select>
+                    </div>
+                    <Button
+                      type="button"
+                      onClick={addApplyMethod}
+                      disabled={!selectedMethodToAdd}
+                      className="bg-[#C8782A] hover:bg-[#B06820] text-white font-semibold px-4 py-2.5 h-auto sm:mb-0"
+                    >
+                      <Plus size={16} className="mr-1" /> Add
+                    </Button>
+                  </div>
+
+                  {/* Display added methods */}
+                  {applyMethods.length > 0 && (
+                    <div className="space-y-3 mt-2">
+                      {applyMethods.map((method, index) => (
+                        <ApplyMethodCard
+                          key={index}
+                          method={method.method}
+                          data={method}
+                          onChange={(field, value) => updateApplyMethod(index, field, value)}
+                          onRemove={() => removeApplyMethod(index)}
+                          isRemovable={applyMethods.length > 1}
+                        />
+                      ))}
+                    </div>
+                  )}
+
+                  {errors.applyMethods && (
+                    <p className="text-xs text-red-500 flex items-center gap-1 mt-1"><AlertCircle size={12} /> {errors.applyMethods}</p>
+                  )}
+                  {Object.keys(errors).filter(k => k.startsWith('applyMethod_')).map(key => (
+                    <p key={key} className="text-xs text-red-500 flex items-center gap-1"><XCircle size={12} /> {errors[key]}</p>
+                  ))}
                 </div>
               </div>
 
@@ -577,7 +923,7 @@ export default function PostAJobPage() {
                     type="submit"
                     size="lg"
                     disabled={loading}
-                    className="bg-[#C8782A] hover:bg-[#B06820] text-white font-semibold px-10 shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-60"
+                    className="bg-[#C8782A] hover:bg-[#B06820] text-white font-semibold px-10 shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-60 w-full sm:w-auto"
                   >
                     {loading ? (
                       <span className="flex items-center gap-2">
@@ -588,77 +934,60 @@ export default function PostAJobPage() {
                         Submitting…
                       </span>
                     ) : (
-                      <span className="flex items-center gap-2">
-                        Submit Job Posting <Send size={15} />
-                      </span>
+                      <span className="flex items-center gap-2">Submit Job Posting <Send size={15} /></span>
                     )}
                   </Button>
                   <p className="text-xs text-[#6B3A2A]/50 self-center leading-relaxed max-w-xs">
-                    Our team reviews every posting and will confirm within 1 business day.
+                    Your job posting will be live immediately. You can edit or close it from your dashboard.
                   </p>
                 </div>
               </div>
             </motion.form>
 
-            {/* ── RIGHT: Sidebar ───────────────────────────────────────── */}
+            {/* RIGHT: Sidebar - Preview */}
             <motion.div
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.15 }}
-              className="flex flex-col gap-5 xl:sticky xl:top-24"
+              className="xl:w-[380px] flex-shrink-0"
             >
-              {/* Live preview */}
-              <JobPostingPreview data={previewData} />
-
-              {/* Need help */}
-              <div className="bg-[#6B3A2A] rounded-2xl p-6 text-[#FAF5EE]">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center">
-                    <Briefcase size={16} className="text-white" />
+              <div className="flex flex-col gap-5 xl:sticky xl:top-24">
+                <JobPostingPreview data={previewData} />
+{/* 
+                <div className="bg-[#6B3A2A] rounded-2xl p-6 text-[#FAF5EE]">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center">
+                      <Briefcase size={16} className="text-white" />
+                    </div>
+                    <h4 className="font-bold" style={{ fontFamily: "'Playfair Display', serif" }}>Need Help?</h4>
                   </div>
-                  <h4
-                    className="font-bold"
-                    style={{ fontFamily: "'Playfair Display', serif" }}
-                  >
-                    Need Help?
-                  </h4>
-                </div>
-                <p className="text-[#FAF5EE]/70 text-sm leading-relaxed mb-4">
-                  Our team can help you craft an inclusive, effective job posting that resonates
-                  with Indigenous job seekers.
-                </p>
-                <Link href="/contact">
-                  <Button
-                    variant="outline"
-                    className="border-white text-white hover:bg-white hover:text-[#6B3A2A] w-full text-sm font-semibold"
-                  >
-                    Contact Aboriginal Jobs Canada
-                  </Button>
-                </Link>
-              </div>
+                  <p className="text-[#FAF5EE]/70 text-sm leading-relaxed mb-4">
+                    Our team can help you craft an inclusive, effective job posting that resonates with Indigenous job seekers.
+                  </p>
+                  <Link href="/contact">
+                    <Button variant="outline" className="border-white text-white hover:bg-white hover:text-[#6B3A2A] w-full text-sm font-semibold">
+                      Contact Aboriginal Jobs Canada
+                    </Button>
+                  </Link>
+                </div> */}
 
-              {/* Why post with us */}
-              <div className="bg-[#FAF5EE] rounded-2xl p-6 border border-[#C8782A]/10">
-                <h4
-                  className="font-bold text-[#1C1C1C] mb-4"
-                  style={{ fontFamily: "'Playfair Display', serif" }}
-                >
-                  Why Post with Aboriginal Jobs Canada?
-                </h4>
-                <ul className="flex flex-col gap-3">
-                  {[
-                    '15,000+ active Indigenous job seekers',
-                    'Canada-wide reach across all provinces & territories',
-                    'Culturally respectful, inclusive platform',
-                    'Dedicated employer support team',
-                    'Aligned with TRC Calls to Action',
-                  ].map((item) => (
-                    <li key={item} className="flex items-start gap-2.5 text-sm text-[#6B3A2A]/75">
-                      <CheckCircle size={14} className="text-[#7A9E7E] flex-shrink-0 mt-0.5" />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
+                <div className="bg-[#FAF5EE] rounded-2xl p-6 border border-[#C8782A]/10">
+                  <h4 className="font-bold text-[#1C1C1C] mb-4" style={{ fontFamily: "'Playfair Display', serif" }}>Why Post with Aboriginal Jobs Canada?</h4>
+                  <ul className="flex flex-col gap-3">
+                    {[
+                      '15,000+ active Indigenous job seekers',
+                      'Canada-wide reach across all provinces & territories',
+                      'Culturally respectful, inclusive platform',
+                      'Dedicated employer support team',
+                      'Aligned with TRC Calls to Action',
+                    ].map((item) => (
+                      <li key={item} className="flex items-start gap-2.5 text-sm text-[#6B3A2A]/75">
+                        <CheckCircle size={14} className="text-[#7A9E7E] flex-shrink-0 mt-0.5" />
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </div>
             </motion.div>
           </div>

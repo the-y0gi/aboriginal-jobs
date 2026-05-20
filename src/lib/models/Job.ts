@@ -1,4 +1,80 @@
+import { string } from "better-auth";
 import { Schema, model, models } from "mongoose";
+
+// How to Apply Methods Sub-schema
+const ApplyMethodSchema = new Schema({
+  method: {
+    type: String,
+    enum: ["email", "phone", "mail", "inPerson"],
+    required: true,
+  },
+  email: {
+    type: String,
+    lowercase: true,
+    trim: true,
+    validate: {
+      validator: function (this: any, v: string) {
+        if (this.method === "email") {
+          return v && v.length > 0 && /^\S+@\S+\.\S+$/.test(v);
+        }
+        return true;
+      },
+      message: "Valid email is required for email application method"
+    }
+  },
+  phone: {
+    type: String,
+    trim: true,
+    validate: {
+      validator: function (this: any, v: string) {
+        if (this.method === "phone") {
+          return v && v.length > 0;
+        }
+        return true;
+      },
+      message: "Phone number is required for phone application method"
+    }
+  },
+  mailAddress: {
+    type: String,
+    trim: true,
+    validate: {
+      validator: function (this: any, v: string) {
+        if (this.method === "mail") {
+          return v && v.length > 0;
+        }
+        return true;
+      },
+      message: "Mail address is required for mail application method"
+    }
+  },
+  inPersonAddress: {
+    type: String,
+    trim: true,
+    validate: {
+      validator: function (this: any, v: string) {
+        if (this.method === "inPerson") {
+          return v && v.length > 0;
+        }
+        return true;
+      },
+      message: "In-person address is required for in-person application method"
+    }
+  },
+  inPersonTiming: {
+    type: String,
+    trim: true,
+    validate: {
+      validator: function (this: any, v: string) {
+        if (this.method === "inPerson") {
+          return v && v.length > 0;
+        }
+        return true;
+      },
+      message: "Time schedule is required for in-person application method"
+    }
+  }
+});
 
 const JobSchema = new Schema(
   {
@@ -17,61 +93,142 @@ const JobSchema = new Schema(
       required: true,
       trim: true,
     },
-    location: {
+    city: {
       type: String,
       required: true,
+      trim: true,
     },
     province: {
       type: String,
       required: true,
     },
-    salary: String,
+    location: {
+      type: String,
+      required: true,
+    },
+    salary: {
+      type: String,
+      default: "",
+    },
+    salaryType: {
+      type: String,
+      enum: ["hour", "week", "month", "year"],
+      default: "hour",
+    },
     employmentType: {
       type: String,
-      enum: [
-        "Full-time",
-        "Part-time",
-        "Contract",
-        "Temporary",
-        "Casual",
-        "Seasonal",
-      ],
-      default: "Full-time",
+      enum: ["Full-time", "Part-time", "Contract", "Casual", "Volunteer"],
+      required: true,
     },
     category: {
       type: String,
       required: true,
     },
-    description: {
+    nocCode: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    runDays: {
+      type: String,
+      enum: ["30", "60", "90", "120", "150"],
+      default: "30",
+    },
+    experience: {
+      type: String,
+      default: "",
+    },
+    startDate: {
+      type: String,
+      enum: ["asap", "immediate", "1week", "2weeks", "1month", ""],
+      default: "",
+    },
+    descriptionHtml: {
       type: String,
       required: true,
     },
-    requirements: String,
+    requirementsHtml: {
+      type: String,
+      default: "",
+    },
+    contactEmail: {
+      type: String,
+      lowercase: true,
+      trim: true,
+    },
+    website: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+    indigenousOwned: {
+      type: Boolean,
+      default: false,
+    },
+    remote: {
+      type: Boolean,
+      default: false,
+    },
     status: {
       type: String,
-      enum: ["draft", "active", "closed", "expired"],
+      enum: ["active", "closed", "expired"],
       default: "active",
     },
     indigenousPreference: {
       type: Boolean,
       default: true,
     },
+
+    applyMethods: {
+      type: [ApplyMethodSchema],
+      required: true,
+      validate: {
+        validator: function (v: any[]) {
+          return v && v.length > 0;
+        },
+        message: "At least one application method is required"
+      }
+    },
+
+    postDate: {
+      type: Date,
+      default: Date.now,
+      description: "Employer can set custom post date for display purposes"
+    },
+
     postedAt: {
       type: Date,
       default: Date.now,
     },
-    expiresAt: Date,
+
+    expiresAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,
   }
 );
 
-// IMPORTANT query indexes
+JobSchema.virtual('fullLocation').get(function () {
+  return [this.city, this.province].filter(Boolean).join(', ');
+});
+
+JobSchema.virtual('displayDate').get(function () {
+  return this.postDate || this.postedAt;
+});
+
 JobSchema.index({ employerId: 1 });
 JobSchema.index({ status: 1 });
 JobSchema.index({ province: 1 });
 JobSchema.index({ category: 1 });
 JobSchema.index({ postedAt: -1 });
+JobSchema.index({ postDate: -1 });
+JobSchema.index({ nocCode: 1 });
+JobSchema.index({ expiresAt: 1 });
+JobSchema.index({ "applyMethods.method": 1 });
+JobSchema.set('toJSON', { virtuals: true });
+JobSchema.set('toObject', { virtuals: true });
 
 export const Job = models.Job || model("Job", JobSchema);

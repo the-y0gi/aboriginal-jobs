@@ -70,7 +70,7 @@ export default function JobSeekersPage() {
               <Button className="bg-[#C8782A] hover:bg-[#B06820] text-white font-semibold px-6 rounded-xl shrink-0">Search</Button>
             </motion.div>
             <motion.div variants={fadeUp} className="flex flex-wrap gap-3">
-              <Link href="/register"><Button size="lg" className="bg-white text-[#C8782A] hover:bg-[#FAF5EE] font-semibold px-8">Create Free Profile <ArrowRight size={16} className="ml-2" /></Button></Link>
+              <Link href="/jobs"><Button size="lg" className="bg-white text-[#C8782A] hover:bg-[#FAF5EE] font-semibold px-8">Browse All Jobs <ArrowRight size={16} className="ml-2" /></Button></Link>
             </motion.div>
           </motion.div>
         </div>
@@ -119,7 +119,7 @@ export default function JobSeekersPage() {
                 <div className="flex items-center gap-1.5 text-[#1C1C1C]/50 text-sm mb-5">
                   <MapPin size={13} /><span>{job.location}</span>
                 </div>
-                <Link href="/register" className="inline-flex items-center gap-1.5 text-[#C8782A] text-sm font-semibold hover:gap-2.5 transition-all duration-200">
+                <Link href="/jobs" className="inline-flex items-center gap-1.5 text-[#C8782A] text-sm font-semibold hover:gap-2.5 transition-all duration-200">
                   Apply Now <ArrowRight size={14} />
                 </Link>
               </motion.div>
@@ -152,7 +152,7 @@ export default function JobSeekersPage() {
             ))}
           </motion.div>
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5, delay: 0.3 }} className="text-center mt-10">
-            <Link href="/register"><Button size="lg" className="bg-[#C8782A] hover:bg-[#B06820] text-white font-semibold px-10">Create Your Free Profile <ArrowRight size={16} className="ml-2" /></Button></Link>
+            <Link href="/jobs"><Button size="lg" className="bg-[#C8782A] hover:bg-[#B06820] text-white font-semibold px-10">Start Searching Jobs <ArrowRight size={16} className="ml-2" /></Button></Link>
           </motion.div>
         </div>
       </section>

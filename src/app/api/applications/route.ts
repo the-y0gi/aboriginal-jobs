@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
     const role = searchParams.get("role");
 
     if (role === "employer") {
-      const employerRecord = await Employer.findOne({ userId });
+      const employerRecord = await Employer.findOne({ authUserId: userId });
 
       if (!employerRecord) {
         return NextResponse.json({ applications: [], jobs: [] });

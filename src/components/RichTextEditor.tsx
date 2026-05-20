@@ -1,176 +1,263 @@
-"use client";
+import { useState, useCallback, useEffect, useRef } from 'react';
+import dynamic from 'next/dynamic';
+import 'react-quill-new/dist/quill.snow.css';
 
-/**
- * RichTextEditor — lightweight Lexical-based editor for job descriptions.
- * Supports bold, italic, unordered lists, and ordered lists.
- * Calls onChange with the current plain-text content for the live preview,
- * and onHtmlChange with serialised HTML for form submission.
- */
-import { useCallback } from 'react';
-import { LexicalComposer } from '@lexical/react/LexicalComposer';
-import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
-import { ContentEditable } from '@lexical/react/LexicalContentEditable';
-import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin';
-import { OnChangePlugin } from '@lexical/react/LexicalOnChangePlugin';
-import { ListPlugin } from '@lexical/react/LexicalListPlugin';
-import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
-import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary';
-import {
-  $getRoot,
-  FORMAT_TEXT_COMMAND,
-  type EditorState,
-} from 'lexical';
-import {
-  INSERT_UNORDERED_LIST_COMMAND,
-  INSERT_ORDERED_LIST_COMMAND,
-  ListNode,
-  ListItemNode,
-} from '@lexical/list';
-import { $generateHtmlFromNodes } from '@lexical/html';
-import { Bold, Italic, List, ListOrdered } from 'lucide-react';
-import { cn } from '@/lib/utils';
+const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false });
 
-/* ── Toolbar ──────────────────────────────────────────────────────────── */
-function ToolbarPlugin() {
-  const [editor] = useLexicalComposerContext();
-
-  const format = useCallback(
-    (fmt: 'bold' | 'italic') => {
-      editor.dispatchCommand(FORMAT_TEXT_COMMAND, fmt);
-    },
-    [editor]
-  );
-
-  const insertList = useCallback(
-    (type: 'bullet' | 'number') => {
-      if (type === 'bullet') {
-        editor.dispatchCommand(INSERT_UNORDERED_LIST_COMMAND, undefined);
-      } else {
-        editor.dispatchCommand(INSERT_ORDERED_LIST_COMMAND, undefined);
-      }
-    },
-    [editor]
-  );
-
-  const btn =
-    'p-1.5 rounded hover:bg-[#C8782A]/10 text-[#6B3A2A] hover:text-[#C8782A] transition-colors duration-150';
-
-  return (
-    <div className="flex items-center gap-0.5 px-3 py-2 border-b border-[#C8782A]/15 bg-[#FAF5EE]/60">
-      <button type="button" className={btn} onClick={() => format('bold')} title="Bold">
-        <Bold size={14} />
-      </button>
-      <button type="button" className={btn} onClick={() => format('italic')} title="Italic">
-        <Italic size={14} />
-      </button>
-      <div className="w-px h-4 bg-[#C8782A]/20 mx-1" />
-      <button type="button" className={btn} onClick={() => insertList('bullet')} title="Bullet list">
-        <List size={14} />
-      </button>
-      <button type="button" className={btn} onClick={() => insertList('number')} title="Numbered list">
-        <ListOrdered size={14} />
-      </button>
-    </div>
-  );
-}
-
-/* ── Change handler ───────────────────────────────────────────────────── */
-interface ChangeHandlerProps {
-  onChange: (text: string) => void;
-  onHtmlChange: (html: string) => void;
-}
-
-function ChangeHandler({ onChange, onHtmlChange }: ChangeHandlerProps) {
-  const [editor] = useLexicalComposerContext();
-
-  const handleChange = useCallback(
-    (state: EditorState) => {
-      state.read(() => {
-        const text = $getRoot().getTextContent();
-        onChange(text);
-      });
-      editor.update(() => {
-        const html = $generateHtmlFromNodes(editor, null);
-        onHtmlChange(html);
-      });
-    },
-    [editor, onChange, onHtmlChange]
-  );
-
-  return <OnChangePlugin onChange={handleChange} />;
-}
-
-/* ── Placeholder ──────────────────────────────────────────────────────── */
-function Placeholder({ text }: { text: string }) {
-  return (
-    <div className="absolute top-3 left-3 text-sm text-[#1C1C1C]/35 pointer-events-none select-none">
-      {text}
-    </div>
-  );
-}
-
-/* ── Main export ──────────────────────────────────────────────────────── */
 interface RichTextEditorProps {
   placeholder?: string;
   onChange?: (text: string) => void;
   onHtmlChange?: (html: string) => void;
   minHeight?: number;
-  className?: string;
+  maxLength?: number;
+  required?: boolean;
 }
 
+const SIMPLE_MODULES = {
+  toolbar: [
+    ['bold', 'italic', 'underline'],
+    [{ list: 'ordered' }, { list: 'bullet' }],
+    ['clean'],
+  ],
+};
+
+// Full toolbar for desktop
+const FULL_MODULES = {
+  toolbar: [
+    [{ header: [1, 2, 3, false] }],
+    ['bold', 'italic', 'underline', 'strike'],
+    [{ list: 'ordered' }, { list: 'bullet' }],
+    ['link', 'clean'],
+  ],
+};
+
+const formats = [
+  'header', 'bold', 'italic', 'underline', 'strike',
+  'list', 'bullet', 'link',
+];
+
 export default function RichTextEditor({
-  placeholder = 'Start typing…',
+  placeholder,
   onChange,
   onHtmlChange,
-  minHeight = 160,
-  className,
+  minHeight = 180,
+  maxLength = 5000,
+  required = false
 }: RichTextEditorProps) {
-  const initialConfig = {
-    namespace: 'JobDescriptionEditor',
-    nodes: [ListNode, ListItemNode],
-    onError: (err: Error) => console.error('Lexical error:', err),
-    theme: {
-      text: {
-        bold: 'font-bold',
-        italic: 'italic',
-      },
-      list: {
-        ul: 'list-disc list-inside ml-2 my-1',
-        ol: 'list-decimal list-inside ml-2 my-1',
-        listitem: 'my-0.5',
-      },
-    },
+  const [value, setValue] = useState('');
+  const [charCount, setCharCount] = useState(0);
+  const [isLimitReached, setIsLimitReached] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const quillRef = useRef<any>(null);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  const stripHtml = (html: string) => {
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    return tmp.textContent || tmp.innerText || '';
+  };
+
+  const handleChange = (content: string) => {
+    const plainText = stripHtml(content);
+    const currentLength = plainText.length;
+
+    if (maxLength && currentLength > maxLength) {
+      setIsLimitReached(true);
+      return;
+    }
+
+    setIsLimitReached(false);
+    setCharCount(currentLength);
+    setValue(content);
+    onChange?.(plainText);
+    onHtmlChange?.(content);
+  };
+
+  // Get responsive height
+  const getEditorHeight = () => {
+    if (isMobile) {
+      return Math.min(minHeight, 150);
+    }
+    return minHeight;
+  };
+
+  // Get modules based on screen size
+  const getModules = () => {
+    return isMobile ? SIMPLE_MODULES : FULL_MODULES;
   };
 
   return (
-    <LexicalComposer initialConfig={initialConfig}>
-      <div
-        className={cn(
-          'rounded-md border border-[#C8782A]/20 bg-white overflow-hidden focus-within:ring-2 focus-within:ring-[#C8782A]/30 transition-shadow',
-          className
-        )}
-      >
-        <ToolbarPlugin />
-        <div className="relative">
-          <RichTextPlugin
-            contentEditable={
-              <ContentEditable
-                className="outline-none px-3 py-3 text-sm text-[#1C1C1C] leading-relaxed"
-                style={{ minHeight }}
-                aria-label={placeholder}
-              />
+    <div className="w-full">
+      {/* CSS for responsive editor */}
+      <style jsx global>{`
+        /* Base responsive styles */
+        .custom-quill-editor .ql-container {
+          font-size: 14px;
+          border-radius: 0 0 12px 12px !important;
+        }
+        
+        .custom-quill-editor .ql-editor {
+          padding: 12px 16px !important;
+          min-height: 120px !important;
+          line-height: 1.5 !important;
+        }
+        
+        /* Mobile specific styles */
+        @media (max-width: 640px) {
+          .custom-quill-editor .ql-toolbar {
+            padding: 8px !important;
+            border-radius: 12px 12px 0 0 !important;
+            display: flex !important;
+            flex-wrap: wrap !important;
+            gap: 4px !important;
+          }
+          
+          .custom-quill-editor .ql-toolbar .ql-formats {
+            margin-right: 4px !important;
+            display: inline-flex !important;
+          }
+          
+          .custom-quill-editor .ql-toolbar button {
+            width: 32px !important;
+            height: 32px !important;
+            padding: 4px !important;
+          }
+          
+          .custom-quill-editor .ql-toolbar button svg {
+            width: 18px !important;
+            height: 18px !important;
+          }
+          
+          .custom-quill-editor .ql-picker {
+            font-size: 12px !important;
+          }
+          
+          .custom-quill-editor .ql-picker-label {
+            padding: 4px 8px !important;
+          }
+          
+          .custom-quill-editor .ql-editor {
+            font-size: 15px !important;
+            padding: 10px 12px !important;
+          }
+        }
+        
+        /* Tablet styles */
+        @media (min-width: 641px) and (max-width: 1024px) {
+          .custom-quill-editor .ql-toolbar button {
+            width: 34px !important;
+            height: 34px !important;
+          }
+          
+          .custom-quill-editor .ql-editor {
+            font-size: 15px !important;
+          }
+        }
+        
+        /* Desktop styles */
+        @media (min-width: 1025px) {
+          .custom-quill-editor .ql-editor {
+            font-size: 16px !important;
+          }
+        }
+        
+        /* Character counter styles */
+        .char-counter {
+          transition: all 0.2s ease;
+        }
+        
+        /* Required field indicator */
+        .required-indicator {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+        }
+        
+        /* Focus states */
+        .custom-quill-editor .ql-container:focus-within {
+          box-shadow: 0 0 0 2px rgba(200, 120, 42, 0.2);
+        }
+      `}</style>
+
+      <div className="custom-quill-editor w-full">
+        <ReactQuill
+          ref={quillRef}
+          theme="snow"
+          value={value}
+          onChange={handleChange}
+          placeholder={placeholder}
+          modules={getModules()}
+          formats={formats}
+          style={{ height: getEditorHeight() }}
+          onKeyPress={(e: any) => {
+            if (isLimitReached && e.key !== 'Backspace' && e.key !== 'Delete') {
+              e.preventDefault();
             }
-            placeholder={<Placeholder text={placeholder} />}
-            ErrorBoundary={LexicalErrorBoundary}
-          />
-        </div>
-        <HistoryPlugin />
-        <ListPlugin />
-        <ChangeHandler
-          onChange={onChange ?? (() => {})}
-          onHtmlChange={onHtmlChange ?? (() => {})}
+          }}
         />
       </div>
-    </LexicalComposer>
+
+      {/* Footer - Responsive character counter */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mt-3 px-1">
+        <div className="text-xs text-[#6B3A2A]/50">
+          {required && !value && (
+            <span className="required-indicator text-red-500">
+              <svg className="w-3 h-3 inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+              Required field
+            </span>
+          )}
+          {!required && (
+            <span className="text-[#6B3A2A]/40">
+              {isMobile ? '💡' : 'Tip:'} Use formatting tools to style your text
+            </span>
+          )}
+        </div>
+
+        <div className={`char-counter text-xs px-2 py-1 rounded-full ${isLimitReached
+            ? 'bg-red-50 text-red-600 font-semibold'
+            : charCount > maxLength * 0.9
+              ? 'bg-yellow-50 text-yellow-700'
+              : 'bg-gray-50 text-[#6B3A2A]/60'
+          }`}>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="hidden xs:inline">📄</span>
+            <span className="font-mono">
+              {charCount.toLocaleString()} / {maxLength.toLocaleString()}
+            </span>
+            <span className="hidden xs:inline">characters</span>
+          </span>
+        </div>
+      </div>
+
+      {/* Warning message when approaching limit */}
+      {!isLimitReached && charCount > maxLength * 0.9 && (
+        <p className="text-xs text-yellow-600 mt-2 flex items-center gap-1.5 bg-yellow-50 p-2 rounded-lg">
+          <span className="inline-block w-2 h-2 rounded-full bg-yellow-500"></span>
+          Approaching character limit ({maxLength - charCount} characters remaining)
+        </p>
+      )}
+
+      {/* Error message when limit reached */}
+      {isLimitReached && (
+        <p className="text-xs text-red-600 mt-2 flex items-center gap-1.5 bg-red-50 p-2 rounded-lg">
+          <span className="inline-block w-3 h-3 rounded-full bg-red-500"></span>
+          Maximum character limit of {maxLength.toLocaleString()} reached. Please shorten your text.
+        </p>
+      )}
+    </div>
   );
 }

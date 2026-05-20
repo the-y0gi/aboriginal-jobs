@@ -55,7 +55,7 @@ export async function PATCH(
       );
     }
 
-    const employer = await Employer.findOne({ userId });
+    const employer = await Employer.findOne({authUserId: userId });
     if (!employer || employer._id.toString() !== job.employerId.toString()) {
       return NextResponse.json({ error: "Forbidden." }, { status: 403 });
     }
