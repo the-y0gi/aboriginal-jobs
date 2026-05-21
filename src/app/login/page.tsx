@@ -14,6 +14,7 @@ import { Label } from '@/components/ui/label';
 import { signIn } from '@/lib/auth/auth-client';
 import { InputOTP, InputOTPGroup, InputOTPSlot, InputOTPSeparator } from "@/components/ui/input-otp";
 import ForgotPasswordModal from '@/components/ForgetPasswordModel';
+import toast from 'react-hot-toast';
 
 /* ── Logo mark ──────────────────────────────────────────────────────── */
 function LogoMark() {
@@ -101,12 +102,16 @@ function LoginForm() {
     try {
       const result = await signIn.email({ email, password });
       if (result.error) {
-        setServerError(result.error.message || 'Invalid email or password.');
+        const errMsg = result.error.message || 'Invalid email or password.';
+        setServerError(errMsg);
+        toast.error(errMsg);
       } else {
+        toast.success('Signed in successfully!');
         router.replace(from);
       }
     } catch {
       setServerError('Something went wrong. Please try again.');
+      toast.error('Something went wrong. Please try again.');
     } finally {
       setLoading(false);
     }

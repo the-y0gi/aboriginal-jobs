@@ -36,7 +36,7 @@ import {
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { toast } from 'sonner';
+import toast from 'react-hot-toast';
 import { useSession } from '@/lib/auth/auth-client';
 
 /* ── Types ──────────────────────────────────────────────────────────── */

@@ -15,7 +15,7 @@ import { Switch } from '@/components/ui/switch';
 import RichTextEditor from '@/components/RichTextEditor';
 import JobPostingPreview, { type JobPostingData } from '@/components/JobPostingPreview';
 import { useSession } from '@/lib/auth/auth-client';
-import { toast } from 'sonner';
+import toast from 'react-hot-toast';
 
 /* ── Animation variants ─────────────────────────────────────────────── */
 const fadeUp = {
@@ -410,7 +410,9 @@ export default function PostAJobPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setServerError(data.error || `Failed to ${isEditMode ? 'update' : 'submit'} job posting.`);
+        const errMsg = data.error || `Failed to ${isEditMode ? 'update' : 'submit'} job posting.`;
+        setServerError(errMsg);
+        toast.error(errMsg);
         return;
       }
 
@@ -423,6 +425,7 @@ export default function PostAJobPage() {
       }
     } catch {
       setServerError('Network error. Please check your connection and try again.');
+      toast.error('Network error. Please check your connection and try again.');
     } finally {
       setLoading(false);
     }

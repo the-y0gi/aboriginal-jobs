@@ -12,6 +12,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { InputOTP, InputOTPGroup, InputOTPSlot, InputOTPSeparator } from "@/components/ui/input-otp";
+import toast from 'react-hot-toast';
+import { signIn } from '@/lib/auth/auth-client';
 
 /* ── Types ──────────────────────────────────────────────────────────── */
 interface FormData {
@@ -254,7 +256,9 @@ function RegisterForm() {
         const data = await res.json();
 
         if (!res.ok) {
-          setServerError(data.error || 'Failed to send verification code. Please try again.');
+          const errMsg = data.error || 'Failed to send verification code. Please try again.';
+          setServerError(errMsg);
+          toast.error(errMsg);
           setLoading(false);
           return;
         }
@@ -270,8 +274,10 @@ function RegisterForm() {
         setOtpVal('');
         setOtpCountdown(60);
         setOtpSentMsg('A 6-digit verification code has been sent to your email.');
+        toast.success('Verification code sent to your email!');
       } catch {
         setServerError('Something went wrong. Please try again.');
+        toast.error('Something went wrong. Please try again.');
       } finally {
         setLoading(false);
       }
@@ -294,7 +300,9 @@ function RegisterForm() {
         const verifyData = await verifyRes.json();
 
         if (!verifyRes.ok) {
-          setServerError(verifyData.error || 'Incorrect or expired verification code.');
+          const errMsg = verifyData.error || 'Incorrect or expired verification code.';
+          setServerError(errMsg);
+          toast.error(errMsg);
           setLoading(false);
           return;
         }
@@ -316,13 +324,30 @@ function RegisterForm() {
         const registerData = await registerRes.json();
 
         if (!registerRes.ok) {
-          setServerError(registerData.error || 'Registration failed.');
+          const errMsg = registerData.error || 'Registration failed.';
+          setServerError(errMsg);
+          toast.error(errMsg);
           setLoading(false);
           return;
         }
-        setSubmitted(true);
+        // Auto login after successful registration
+const loginResult = await signIn.email({
+  email: form.email,
+  password: form.password,
+});
+
+if (loginResult.error) {
+  setServerError("Account created, but auto-login failed. Please sign in manually.");
+  toast.error("Please login manually.");
+  setLoading(false);
+  return;
+}
+
+toast.success('Account created successfully! Welcome aboard!');
+setSubmitted(true);
       } catch {
         setServerError('An error occurred during account creation. Please try again.');
+        toast.error('An error occurred during account creation. Please try again.');
       } finally {
         setLoading(false);
       }
@@ -343,7 +368,9 @@ function RegisterForm() {
       const data = await res.json();
 
       if (!res.ok) {
-        setServerError(data.error || 'Failed to resend verification code.');
+        const errMsg = data.error || 'Failed to resend verification code.';
+        setServerError(errMsg);
+        toast.error(errMsg);
         setLoading(false);
         return;
       }
@@ -354,9 +381,11 @@ function RegisterForm() {
 
       setOtpCountdown(60);
       setOtpSentMsg('A new 6-digit verification code has been sent to your email.');
-      setOtpVal(''); 
+      setOtpVal('');
+      toast.success('New verification code sent!');
     } catch {
       setServerError('Failed to resend code. Please try again.');
+      toast.error('Failed to resend code. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -429,9 +458,9 @@ function RegisterForm() {
                   <ChevronRight size={15} className="ml-1" />
                 </Button>
               </Link>
-              <Link href="/login">
+              <Link href="/employers/dashboard">
                 <Button variant="outline" className="w-full border-[#C8782A]/25 text-[#6B3A2A] hover:bg-[#C8782A]/5 font-medium">
-                  Sign In to Your Account
+                 Go to Dashboard
                 </Button>
               </Link>
             </div>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, X, AlertCircle, CheckCircle, RefreshCw, Eye, EyeOff, Lock } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -83,10 +84,12 @@ function ForgotPasswordModal({ isOpen, onClose }: ForgotPasswordModalProps) {
   const handleSendOTP = async () => {
     if (!email) {
       setError('Please enter your email address.');
+      toast.error('Please enter your email address.');
       return;
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       setError('Please enter a valid email address.');
+      toast.error('Please enter a valid email address.');
       return;
     }
 
@@ -103,16 +106,20 @@ function ForgotPasswordModal({ isOpen, onClose }: ForgotPasswordModalProps) {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || 'Failed to send OTP. Please try again.');
+        const errMsg = data.error || 'Failed to send OTP. Please try again.';
+        setError(errMsg);
+        toast.error(errMsg);
         return;
       }
 
       if (data._devOtp) setDevOtp(data._devOtp);
       setSuccess('Verification code sent to your email.');
+      toast.success('Verification code sent to your email!');
       setOtpCountdown(60);
       setStep('otp');
     } catch {
       setError('Something went wrong. Please try again.');
+      toast.error('Something went wrong. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -133,16 +140,20 @@ function ForgotPasswordModal({ isOpen, onClose }: ForgotPasswordModalProps) {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || 'Failed to resend OTP.');
+        const errMsg = data.error || 'Failed to resend OTP.';
+        setError(errMsg);
+        toast.error(errMsg);
         return;
       }
 
       if (data._devOtp) setDevOtp(data._devOtp);
       setSuccess('New verification code sent.');
+      toast.success('New verification code sent!');
       setOtpCountdown(60);
       setOtp('');
     } catch {
       setError('Failed to resend code.');
+      toast.error('Failed to resend code.');
     } finally {
       setLoading(false);
     }
@@ -151,6 +162,7 @@ function ForgotPasswordModal({ isOpen, onClose }: ForgotPasswordModalProps) {
   const handleVerifyOTP = async () => {
     if (otp.length < 6) {
       setError('Please enter the full 6-digit verification code.');
+      toast.error('Please enter the full 6-digit code.');
       return;
     }
 
@@ -166,14 +178,18 @@ function ForgotPasswordModal({ isOpen, onClose }: ForgotPasswordModalProps) {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || 'Invalid or expired verification code.');
+        const errMsg = data.error || 'Invalid or expired verification code.';
+        setError(errMsg);
+        toast.error(errMsg);
         return;
       }
 
       setSuccess('OTP verified! Set your new password.');
+      toast.success('OTP verified! Set your new password.');
       setStep('reset');
     } catch {
       setError('Failed to verify OTP.');
+      toast.error('Failed to verify OTP.');
     } finally {
       setLoading(false);
     }
@@ -182,14 +198,17 @@ function ForgotPasswordModal({ isOpen, onClose }: ForgotPasswordModalProps) {
   const handleResetPassword = async () => {
     if (!newPassword) {
       setError('Please enter a new password.');
+      toast.error('Please enter a new password.');
       return;
     }
     if (newPassword.length < 8) {
       setError('Password must be at least 8 characters.');
+      toast.error('Password must be at least 8 characters.');
       return;
     }
     if (newPassword !== confirmPassword) {
       setError('Passwords do not match.');
+      toast.error('Passwords do not match.');
       return;
     }
 
@@ -209,16 +228,20 @@ function ForgotPasswordModal({ isOpen, onClose }: ForgotPasswordModalProps) {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || 'Failed to reset password.');
+        const errMsg = data.error || 'Failed to reset password.';
+        setError(errMsg);
+        toast.error(errMsg);
         return;
       }
 
       setSuccess('Password reset successfully! You can now login.');
+      toast.success('Password reset successfully!');
       setTimeout(() => {
         handleForcedReset();
       }, 2000);
     } catch {
       setError('Failed to reset password.');
+      toast.error('Failed to reset password.');
     } finally {
       setLoading(false);
     }

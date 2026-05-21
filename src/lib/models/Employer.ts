@@ -5,7 +5,6 @@ const EmployerSchema = new Schema(
     authUserId: {
       type: String,
       required: true,
-      unique: true,
     },
 
     orgName: {
@@ -27,9 +26,6 @@ const EmployerSchema = new Schema(
   }
 );
 
-EmployerSchema.index({
-  authUserId: 1,
-});
 
 EmployerSchema.index({
   orgName: 1,
