@@ -99,3 +99,12 @@
 html {
   scroll-behavior: smooth;
 }
+
+::-webkit-scrollbar {
+  width: 6px;  
+  height: 15px; 
+}
+
+::-webkit-scrollbar-thumb {
+  background: #b6c18fff; 
+}

@@ -129,21 +129,22 @@ function StatCard({ title, value, icon }: { title: string; value: number; icon: 
 }
 
 
-/* ── View Job Modal Component  ───────────────────────────────────────── */
+
+/* ── View Job Modal Component ───────────────────────────────────────── */
 function ViewJobModal({ job, open, onClose }: { job: Job | null; open: boolean; onClose: () => void }) {
   if (!job) return null;
 
-    //Background Scroll Prevention
-    useEffect(() => {
-      if (open) {
-        document.body.style.overflow = 'hidden';
-      } else {
-        document.body.style.overflow = 'unset';
-      }
-      return () => {
-        document.body.style.overflow = 'unset';
-      };
-    }, [open]);
+  // Background Scroll Prevention
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [open]);
   
   const getApplyMethodDisplay = (method: ApplyMethod) => {
     switch (method.method) {
@@ -162,9 +163,10 @@ function ViewJobModal({ job, open, onClose }: { job: Job | null; open: boolean; 
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-neutral-100 shadow-2xl p-0 gap-0 bg-white">
+      <DialogContent className="max-w-2xl w-full max-h-[90vh] flex flex-col overflow-x-hidden rounded-2xl border border-neutral-100 shadow-2xl p-0 gap-0 bg-white">
         
-        <div className="bg-gradient-to-br from-[#C8782A] via-[#BD6F23] to-[#A05D1A] px-6 py-8 text-white relative">
+        {/* Header (Sticky Top) */}
+        <div className="bg-gradient-to-br from-[#C8782A] via-[#BD6F23] to-[#A05D1A] px-6 py-6 text-white relative flex-shrink-0">
           <DialogHeader className="text-left">
             <DialogTitle className="text-2xl sm:text-3xl font-bold tracking-wide text-white pr-6 leading-tight" style={{ fontFamily: "'Playfair Display', serif" }}>
               {job.title}
@@ -183,7 +185,7 @@ function ViewJobModal({ job, open, onClose }: { job: Job | null; open: boolean; 
         </div>
 
         {/* Main Content Area */}
-        <div className="p-6 space-y-6">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden p-6 space-y-6 max-h-[calc(90vh-140px)]">
           
           {/* Badges Row */}
           <div className="flex flex-wrap gap-2 pb-2 border-b border-neutral-100">
@@ -235,7 +237,7 @@ function ViewJobModal({ job, open, onClose }: { job: Job | null; open: boolean; 
                 <span className="w-1 h-4 bg-[#C8782A] rounded-full"></span> About the Role
               </h4>
               <div 
-                className="text-sm text-neutral-700 prose prose-neutral max-w-none break-words leading-relaxed pl-3"
+                className="text-sm text-neutral-700 prose prose-neutral max-w-none [word-break:break-word] overflow-wrap-anywhere list-inside pl-1"
                 dangerouslySetInnerHTML={{ __html: job.descriptionHtml }}
               />
             </div>
@@ -248,7 +250,7 @@ function ViewJobModal({ job, open, onClose }: { job: Job | null; open: boolean; 
                 <span className="w-1 h-4 bg-[#C8782A] rounded-full"></span> Qualifications & Requirements
               </h4>
               <div 
-                className="text-sm text-neutral-700 prose prose-neutral max-w-none break-words leading-relaxed pl-3"
+                className="text-sm text-neutral-700 prose prose-neutral max-w-none [word-break:break-word] overflow-wrap-anywhere list-inside pl-1"
                 dangerouslySetInnerHTML={{ __html: job.requirementsHtml }}
               />
             </div>
@@ -263,7 +265,7 @@ function ViewJobModal({ job, open, onClose }: { job: Job | null; open: boolean; 
                   const display = getApplyMethodDisplay(method);
                   if (!display) return null;
                   return (
-                    <div key={idx} className="flex items-start gap-3.5 p-3.5 bg-[#FAF5EE]/30 border border-[#C8782A]/10 rounded-xl hover:bg-[#FAF5EE]/50 transition-colors">
+                    <div key={idx} className="flex items-start gap-3 p-3 bg-[#FAF5EE]/30 border border-[#C8782A]/10 rounded-xl hover:bg-[#FAF5EE]/50 transition-colors min-w-0 w-full">
                       <div className="w-9 h-9 rounded-lg bg-white border border-[#C8782A]/20 flex items-center justify-center flex-shrink-0 text-[#C8782A] shadow-sm">
                         <display.icon size={16} />
                       </div>
@@ -271,8 +273,8 @@ function ViewJobModal({ job, open, onClose }: { job: Job | null; open: boolean; 
                         <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">{display.label}</p>
                         <p className="text-xs font-semibold text-neutral-800 break-all mt-0.5 select-all">{display.value}</p>
                         {method.method === 'inPerson' && method.inPersonTiming && (
-                          <div className="mt-2 flex items-center gap-1.5 text-[10px] text-[#A05D1A] font-semibold bg-[#FAF5EE] border border-[#C8782A]/10 px-2 py-0.5 w-max rounded-md">
-                            <Clock size={11} /> {method.inPersonTiming}
+                          <div className="mt-2 flex items-center gap-1.5 text-[10px] text-[#A05D1A] font-semibold bg-[#FAF5EE] border border-[#C8782A]/10 px-2 py-0.5 w-max rounded-md whitespace-normal">
+                            <Clock size={11} className="flex-shrink-0" /> {method.inPersonTiming}
                           </div>
                         )}
                       </div>
@@ -285,7 +287,7 @@ function ViewJobModal({ job, open, onClose }: { job: Job | null; open: boolean; 
         </div>
 
         {/* Sticky/Fixed Footer */}
-        <DialogFooter className="flex flex-row items-center justify-end gap-3 px-6 py-4 bg-neutral-50 border-t border-neutral-100 rounded-b-2xl">
+        <DialogFooter className="flex flex-row items-center justify-end gap-3 px-6 py-4 bg-neutral-50 border-t border-neutral-100 rounded-b-2xl flex-shrink-0">
           <Button variant="outline" onClick={onClose} className="border-neutral-200 text-neutral-600 hover:bg-neutral-100 hover:text-neutral-800 rounded-xl h-10 px-5 font-semibold text-sm transition-colors">
             Close
           </Button>
