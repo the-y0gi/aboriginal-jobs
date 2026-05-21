@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { formatDate } from 'date-fns';
 
 /* ── Constants ──────────────────────────────────────────────────────── */
 const PAGE_SIZE = 8;
@@ -38,6 +39,7 @@ const ALL_TYPES = ["Full-time", "Part-time", "Contract", "Casual / Seasonal", "V
 
 /* ── Types ──────────────────────────────────────────────────────────── */
 export interface Job {
+  postDate: ReactNode;
   _id: string;
   id?: string;
   title: string;
@@ -255,7 +257,14 @@ function JobCard({ job }: { job: Job }) {
 
         {/* Footer */}
         <div className="flex items-center justify-between pt-3 border-t border-[#C8782A]/8">
-          <span className="text-xs text-[#6B3A2A]/45">{postedLabel(job.postedAt || job.createdAt || new Date())}</span>
+          {/* <span className="text-xs text-[#6B3A2A]/45">{postedLabel(job.postedAt || job.createdAt || new Date())}</span> */}
+          <span className="text-xs text-[#6B3A2A]/45">{new Date(job.postDate).toLocaleDateString("en-US", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  })}</span>
+
+
           <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#C8782A] group-hover:gap-2 transition-all duration-200">
             View Job <ChevronRight size={13} />
           </span>
@@ -377,6 +386,7 @@ export default function JobsPage() {
       createdAt: job.createdAt,
       expiresAt: job.expiresAt,
       indigenousPreference: job.indigenousPreference,
+      postDate: job.postDate,
     }));
   }, [dbJobs]);
 

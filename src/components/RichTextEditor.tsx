@@ -6,6 +6,7 @@ const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false });
 
 interface RichTextEditorProps {
   placeholder?: string;
+  value?: string;  
   onChange?: (text: string) => void;
   onHtmlChange?: (html: string) => void;
   minHeight?: number;
@@ -21,7 +22,6 @@ const SIMPLE_MODULES = {
   ],
 };
 
-// Full toolbar for desktop
 const FULL_MODULES = {
   toolbar: [
     [{ header: [1, 2, 3, false] }],
@@ -38,17 +38,27 @@ const formats = [
 
 export default function RichTextEditor({
   placeholder,
+  value: externalValue,  
   onChange,
   onHtmlChange,
   minHeight = 180,
-  maxLength = 5000,
+  maxLength = 1000,
   required = false
 }: RichTextEditorProps) {
-  const [value, setValue] = useState('');
+  const [value, setValue] = useState(externalValue || '');
   const [charCount, setCharCount] = useState(0);
   const [isLimitReached, setIsLimitReached] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const quillRef = useRef<any>(null);
+  const isFirstRender = useRef(true);
+
+  useEffect(() => {
+    if (externalValue !== undefined && externalValue !== value) {
+      setValue(externalValue);
+      const plainText = stripHtml(externalValue);
+      setCharCount(plainText.length);
+    }
+  }, [externalValue]);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -62,6 +72,7 @@ export default function RichTextEditor({
   }, []);
 
   const stripHtml = (html: string) => {
+    if (!html) return '';
     const tmp = document.createElement('div');
     tmp.innerHTML = html;
     return tmp.textContent || tmp.innerText || '';
@@ -83,7 +94,6 @@ export default function RichTextEditor({
     onHtmlChange?.(content);
   };
 
-  // Get responsive height
   const getEditorHeight = () => {
     if (isMobile) {
       return Math.min(minHeight, 150);
@@ -91,16 +101,22 @@ export default function RichTextEditor({
     return minHeight;
   };
 
-  // Get modules based on screen size
   const getModules = () => {
     return isMobile ? SIMPLE_MODULES : FULL_MODULES;
   };
 
+  // Calculate initial character count
+  useEffect(() => {
+    if (isFirstRender.current && value) {
+      const plainText = stripHtml(value);
+      setCharCount(plainText.length);
+      isFirstRender.current = false;
+    }
+  }, [value]);
+
   return (
     <div className="w-full">
-      {/* CSS for responsive editor */}
       <style jsx global>{`
-        /* Base responsive styles */
         .custom-quill-editor .ql-container {
           font-size: 14px;
           border-radius: 0 0 12px 12px !important;
@@ -112,7 +128,6 @@ export default function RichTextEditor({
           line-height: 1.5 !important;
         }
         
-        /* Mobile specific styles */
         @media (max-width: 640px) {
           .custom-quill-editor .ql-toolbar {
             padding: 8px !important;
@@ -152,7 +167,6 @@ export default function RichTextEditor({
           }
         }
         
-        /* Tablet styles */
         @media (min-width: 641px) and (max-width: 1024px) {
           .custom-quill-editor .ql-toolbar button {
             width: 34px !important;
@@ -164,26 +178,22 @@ export default function RichTextEditor({
           }
         }
         
-        /* Desktop styles */
         @media (min-width: 1025px) {
           .custom-quill-editor .ql-editor {
             font-size: 16px !important;
           }
         }
         
-        /* Character counter styles */
         .char-counter {
           transition: all 0.2s ease;
         }
         
-        /* Required field indicator */
         .required-indicator {
           display: inline-flex;
           align-items: center;
           gap: 4px;
         }
         
-        /* Focus states */
         .custom-quill-editor .ql-container:focus-within {
           box-shadow: 0 0 0 2px rgba(200, 120, 42, 0.2);
         }
@@ -207,7 +217,6 @@ export default function RichTextEditor({
         />
       </div>
 
-      {/* Footer - Responsive character counter */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mt-3 px-1">
         <div className="text-xs text-[#6B3A2A]/50">
           {required && !value && (
@@ -220,14 +229,14 @@ export default function RichTextEditor({
               Required field
             </span>
           )}
-          {!required && (
+          {/* {!required && (
             <span className="text-[#6B3A2A]/40">
               {isMobile ? '💡' : 'Tip:'} Use formatting tools to style your text
             </span>
-          )}
+          )} */}
         </div>
 
-        <div className={`char-counter text-xs px-2 py-1 rounded-full ${isLimitReached
+        <div className={`char-counter text-xs px-2 py-1 mr-2 rounded-full ${isLimitReached
             ? 'bg-red-50 text-red-600 font-semibold'
             : charCount > maxLength * 0.9
               ? 'bg-yellow-50 text-yellow-700'
@@ -243,7 +252,6 @@ export default function RichTextEditor({
         </div>
       </div>
 
-      {/* Warning message when approaching limit */}
       {!isLimitReached && charCount > maxLength * 0.9 && (
         <p className="text-xs text-yellow-600 mt-2 flex items-center gap-1.5 bg-yellow-50 p-2 rounded-lg">
           <span className="inline-block w-2 h-2 rounded-full bg-yellow-500"></span>
@@ -251,7 +259,6 @@ export default function RichTextEditor({
         </p>
       )}
 
-      {/* Error message when limit reached */}
       {isLimitReached && (
         <p className="text-xs text-red-600 mt-2 flex items-center gap-1.5 bg-red-50 p-2 rounded-lg">
           <span className="inline-block w-3 h-3 rounded-full bg-red-500"></span>

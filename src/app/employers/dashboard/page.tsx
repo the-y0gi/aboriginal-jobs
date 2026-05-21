@@ -1,0 +1,759 @@
+"use client";
+
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  Briefcase, Plus, Edit, Trash2, Eye, MoreVertical,
+  MapPin, Clock, DollarSign, Calendar, CheckCircle,
+  AlertCircle, Search, X, ChevronLeft, ChevronRight,
+  Loader2, Building2, Wifi, Leaf, Mail, Phone,
+  ChevronDown
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from 'sonner';
+import { useSession } from '@/lib/auth/auth-client';
+
+/* ── Types ──────────────────────────────────────────────────────────── */
+interface ApplyMethod {
+  method: string;
+  email?: string;
+  phone?: string;
+  mailAddress?: string;
+  inPersonAddress?: string;
+  inPersonTiming?: string;
+}
+
+interface Job {
+  _id: string;
+  title: string;
+  company: string;
+  city: string;
+  province: string;
+  salary: string;
+  salaryType: string;
+  employmentType: string;
+  category: string;
+  nocCode: string;
+  status: 'active' | 'closed' | 'expired';
+  remote: boolean;
+  indigenousOwned: boolean;
+  postedAt: string;
+  expiresAt: string;
+  descriptionHtml?: string;
+  requirementsHtml?: string;
+  applyMethods?: ApplyMethod[];
+}
+
+interface Stats {
+  totalJobs: number;
+  activeJobs: number;
+  closedJobs: number;
+}
+
+/* ── Helper Functions ───────────────────────────────────────────────── */
+function formatDate(date: string) {
+  if (!date) return 'Not specified';
+  return new Date(date).toLocaleDateString('en-CA', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
+}
+
+function getStatusBadge(status: string) {
+  switch (status) {
+    case 'active':
+      return <Badge className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium border-0 px-2.5 py-0.5 rounded-full shadow-sm text-xs">Active</Badge>;
+    case 'closed':
+      return <Badge className="bg-neutral-500 hover:bg-neutral-600 text-white font-medium border-0 px-2.5 py-0.5 rounded-full shadow-sm text-xs">Closed</Badge>;
+    case 'expired':
+      return <Badge className="bg-rose-600 hover:bg-rose-700 text-white font-medium border-0 px-2.5 py-0.5 rounded-full shadow-sm text-xs">Expired</Badge>;
+    default:
+      return <Badge variant="outline" className="font-medium text-xs rounded-full px-2.5 py-0.5">{status}</Badge>;
+  }
+}
+
+function getSalaryDisplay(salary: string, salaryType: string): string {
+  if (!salary) return 'Not specified';
+  const typeMap: Record<string, string> = {
+    hour: '/hr',
+    week: '/wk',
+    month: '/mo',
+    year: '/yr',
+  };
+  return `$${salary}${typeMap[salaryType] || ''}`;
+}
+
+
+
+/* ── Stat Card Component ────────────────────────────────────────────── */
+function StatCard({ title, value, icon }: { title: string; value: number; icon: React.ReactNode }) {
+  return (
+    <Card className="border border-[#C8782A]/10 bg-white shadow-sm relative overflow-hidden group hover:border-[#C8782A]/30 transition-all duration-300 rounded-2xl">
+      {/* <div className="absolute top-0 left-0 w-1 h-full bg-[#C8782A]/20 group-hover:bg-[#C8782A] transition-colors duration-300" /> */}
+      <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0 px-6 pt-5">
+        <CardTitle className="text-xs font-bold text-[#6B3A2A]/60 uppercase tracking-wider">{title}</CardTitle>
+        <div className="text-[#C8782A] bg-[#FAF5EE] p-2.5 rounded-xl border border-[#C8782A]/5 group-hover:scale-110 transition-transform duration-300 shadow-sm">{icon}</div>
+      </CardHeader>
+      <CardContent className="px-6 pb-5 pt-1">
+        <div className="text-3xl font-extrabold text-[#1C1C1C] tracking-tight">{value}</div>
+      </CardContent>
+    </Card>
+  );
+}
+
+
+/* ── View Job Modal Component  ───────────────────────────────────────── */
+function ViewJobModal({ job, open, onClose }: { job: Job | null; open: boolean; onClose: () => void }) {
+  if (!job) return null;
+
+    //Background Scroll Prevention
+    useEffect(() => {
+      if (open) {
+        document.body.style.overflow = 'hidden';
+      } else {
+        document.body.style.overflow = 'unset';
+      }
+      return () => {
+        document.body.style.overflow = 'unset';
+      };
+    }, [open]);
+  
+  const getApplyMethodDisplay = (method: ApplyMethod) => {
+    switch (method.method) {
+      case 'email':
+        return { icon: Mail, label: 'Email Address', value: method.email };
+      case 'phone':
+        return { icon: Phone, label: 'Phone Number', value: method.phone };
+      case 'mail':
+        return { icon: MapPin, label: 'Mail Address', value: method.mailAddress };
+      case 'inPerson':
+        return { icon: Building2, label: 'In Person', value: method.inPersonAddress };
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-neutral-100 shadow-2xl p-0 gap-0 bg-white">
+        
+        <div className="bg-gradient-to-br from-[#C8782A] via-[#BD6F23] to-[#A05D1A] px-6 py-8 text-white relative">
+          <DialogHeader className="text-left">
+            <DialogTitle className="text-2xl sm:text-3xl font-bold tracking-wide text-white pr-6 leading-tight" style={{ fontFamily: "'Playfair Display', serif" }}>
+              {job.title}
+            </DialogTitle>
+            <DialogDescription className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-white/90 mt-2.5 font-medium text-sm tracking-wide">
+              <span className="flex items-center gap-1.5 bg-white/10 px-2.5 py-0.5 rounded-md backdrop-blur-sm">
+                <Building2 size={14} className="text-white/80" />
+                {job.company}
+              </span>
+              <span className="flex items-center gap-1.5 bg-white/10 px-2.5 py-0.5 rounded-md backdrop-blur-sm">
+                <MapPin size={14} className="text-white/80" />
+                {job.city}, {job.province}
+              </span>
+            </DialogDescription>
+          </DialogHeader>
+        </div>
+
+        {/* Main Content Area */}
+        <div className="p-6 space-y-6">
+          
+          {/* Badges Row */}
+          <div className="flex flex-wrap gap-2 pb-2 border-b border-neutral-100">
+            {getStatusBadge(job.status)}
+            {job.remote && (
+              <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200/60 rounded-full px-3 py-0.5 text-xs font-semibold shadow-sm">
+                <Wifi size={12} className="mr-1.5" /> Remote
+              </Badge>
+            )}
+            {job.indigenousOwned && (
+              <Badge variant="outline" className="bg-emerald-50 text-emerald-800 border-emerald-200/60 rounded-full px-3 py-0.5 text-xs font-semibold shadow-sm">
+                <Leaf size={12} className="mr-1.5" /> Indigenous-owned
+              </Badge>
+            )}
+          </div>
+
+          {/* Job Details Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-5 p-5 bg-[#FAF5EE]/40 border border-[#C8782A]/10 rounded-xl">
+            <div>
+              <p className="text-[11px] uppercase font-bold tracking-wider text-[#6B3A2A]/60">Employment Type</p>
+              <p className="text-sm font-semibold text-neutral-800 mt-1">{job.employmentType}</p>
+            </div>
+            <div>
+              <p className="text-[11px] uppercase font-bold tracking-wider text-[#6B3A2A]/60">Salary</p>
+              <p className="text-sm font-semibold text-neutral-800 mt-1">{getSalaryDisplay(job.salary, job.salaryType)}</p>
+            </div>
+            <div>
+              <p className="text-[11px] uppercase font-bold tracking-wider text-[#6B3A2A]/60">NOC Code</p>
+              <p className="text-sm font-semibold text-neutral-800 mt-1">{job.nocCode || '—'}</p>
+            </div>
+            <div>
+              <p className="text-[11px] uppercase font-bold tracking-wider text-[#6B3A2A]/60">Category</p>
+              <p className="text-sm font-semibold text-neutral-800 mt-1 truncate" title={job.category}>{job.category}</p>
+            </div>
+            <div>
+              <p className="text-[11px] uppercase font-bold tracking-wider text-[#6B3A2A]/60">Posted Date</p>
+              <p className="text-sm font-semibold text-neutral-800 mt-1">{formatDate(job.postedAt)}</p>
+            </div>
+            <div>
+              <p className="text-[11px] uppercase font-bold tracking-wider text-[#6B3A2A]/60">Expiry Date</p>
+              <p className="text-sm font-semibold text-neutral-800 mt-1 text-rose-700">{formatDate(job.expiresAt)}</p>
+            </div>
+          </div>
+
+          {/* About the Role */}
+          {job.descriptionHtml && (
+            <div className="space-y-2">
+              <h4 className="font-bold text-neutral-900 text-base flex items-center gap-2">
+                <span className="w-1 h-4 bg-[#C8782A] rounded-full"></span> About the Role
+              </h4>
+              <div 
+                className="text-sm text-neutral-700 prose prose-neutral max-w-none break-words leading-relaxed pl-3"
+                dangerouslySetInnerHTML={{ __html: job.descriptionHtml }}
+              />
+            </div>
+          )}
+
+          {/* Qualifications */}
+          {job.requirementsHtml && (
+            <div className="pt-2 space-y-2">
+              <h4 className="font-bold text-neutral-900 text-base flex items-center gap-2">
+                <span className="w-1 h-4 bg-[#C8782A] rounded-full"></span> Qualifications & Requirements
+              </h4>
+              <div 
+                className="text-sm text-neutral-700 prose prose-neutral max-w-none break-words leading-relaxed pl-3"
+                dangerouslySetInnerHTML={{ __html: job.requirementsHtml }}
+              />
+            </div>
+          )}
+
+          {/* How to Apply Section */}
+          {job.applyMethods && job.applyMethods.length > 0 && (
+            <div className="border-t border-neutral-100 pt-5 space-y-3">
+              <h4 className="font-bold text-neutral-900 text-base">How to Apply</h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {job.applyMethods.map((method, idx) => {
+                  const display = getApplyMethodDisplay(method);
+                  if (!display) return null;
+                  return (
+                    <div key={idx} className="flex items-start gap-3.5 p-3.5 bg-[#FAF5EE]/30 border border-[#C8782A]/10 rounded-xl hover:bg-[#FAF5EE]/50 transition-colors">
+                      <div className="w-9 h-9 rounded-lg bg-white border border-[#C8782A]/20 flex items-center justify-center flex-shrink-0 text-[#C8782A] shadow-sm">
+                        <display.icon size={16} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">{display.label}</p>
+                        <p className="text-xs font-semibold text-neutral-800 break-all mt-0.5 select-all">{display.value}</p>
+                        {method.method === 'inPerson' && method.inPersonTiming && (
+                          <div className="mt-2 flex items-center gap-1.5 text-[10px] text-[#A05D1A] font-semibold bg-[#FAF5EE] border border-[#C8782A]/10 px-2 py-0.5 w-max rounded-md">
+                            <Clock size={11} /> {method.inPersonTiming}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Sticky/Fixed Footer */}
+        <DialogFooter className="flex flex-row items-center justify-end gap-3 px-6 py-4 bg-neutral-50 border-t border-neutral-100 rounded-b-2xl">
+          <Button variant="outline" onClick={onClose} className="border-neutral-200 text-neutral-600 hover:bg-neutral-100 hover:text-neutral-800 rounded-xl h-10 px-5 font-semibold text-sm transition-colors">
+            Close
+          </Button>
+          <Link href={`/post-a-job?id=${job._id}`} passHref>
+            <Button className="bg-[#C8782A] hover:bg-[#B06820] text-white font-semibold rounded-xl h-10 px-5 text-sm shadow-md shadow-[#C8782A]/10 transition-all flex items-center">
+              <Edit size={14} className="mr-2" /> Edit Job
+            </Button>
+          </Link>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+
+/* ── Job Card Component ─────────────────────────────────────────────── */
+function JobCard({ job, onView, onEdit, onDelete, onStatusChange }: { 
+  job: Job; 
+  onView: () => void; 
+  onEdit: () => void; 
+  onDelete: () => void;
+  onStatusChange: (jobId: string, newStatus: string) => void;
+}) {
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+
+  const handleStatusChange = async (newStatus: string) => {
+    setIsUpdatingStatus(true);
+    onStatusChange(job._id, newStatus);
+    setIsUpdatingStatus(false);
+  };
+
+  return (
+    <Card className="hover:shadow-md border border-[#C8782A]/10 hover:border-[#C8782A]/20 transition-all duration-300 rounded-2xl bg-white overflow-hidden flex flex-col group">
+      <CardHeader className="p-5 pb-3">
+        <div className="flex justify-between items-start gap-3">
+          <div className="flex-1 min-w-0">
+            <CardTitle 
+              onClick={onView}
+              className="text-lg font-bold text-[#1C1C1C] line-clamp-1 group-hover:text-[#C8782A] transition-colors cursor-pointer"
+            >
+              {job.title}
+            </CardTitle>
+            <div className="flex items-center gap-1.5 mt-1">
+              <Building2 size={13} className="text-[#C8782A] flex-shrink-0" />
+              <span className="text-xs font-semibold text-[#6B3A2A]/70 truncate">{job.company}</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            {/* Status Dropdown instead of static badge */}
+
+
+            <div className="relative">
+  <select
+    value={job.status}
+    onChange={(e) => handleStatusChange(e.target.value)}
+    disabled={isUpdatingStatus}
+    className={`
+      text-xs px-2.5 py-1 rounded-full font-semibold cursor-pointer appearance-none
+      ${job.status === 'active' 
+        ? 'bg-green-100 text-green-700 border border-green-200 hover:bg-green-200' 
+        : job.status === 'closed'
+        ? 'bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200'
+        : 'bg-red-100 text-red-700 border border-red-200 hover:bg-red-200'
+      }
+      ${isUpdatingStatus ? 'opacity-70 cursor-wait' : ''}
+      pr-6
+    `}
+  >
+    <option value="active">
+      {isUpdatingStatus && job.status === 'active' ? 'Updating...' : '● Active'}
+    </option>
+    <option value="closed">
+      {isUpdatingStatus && job.status === 'closed' ? 'Updating...' : '○ Closed'}
+    </option>
+    <option value="expired">
+      {isUpdatingStatus && job.status === 'expired' ? 'Updating...' : '○ Expired'}
+    </option>
+  </select>
+  
+  {/* Always show chevron, but hide on loading */}
+  {!isUpdatingStatus && (
+    <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-current opacity-60" />
+  )}
+  
+{isUpdatingStatus && (
+  <div className="absolute right-2 top-1/2 -translate-y-1/2">
+    <Loader2 
+      size={12} 
+      className="animate-spin text-current" 
+      style={{ animation: 'spin 1s linear infinite' }}
+    />
+  </div>
+)}
+</div>
+            
+         
+          </div>
+        </div>
+      </CardHeader>
+      
+      <CardContent className="p-5 pt-0 pb-4 flex-1">
+        <div className="grid grid-cols-2 gap-x-4 gap-y-2.5 text-xs border-y border-neutral-50 py-3 my-1">
+          <div className="flex items-center gap-2 text-[#6B3A2A]/80 font-medium min-w-0">
+            <MapPin size={13} className="text-[#C8782A] flex-shrink-0 opacity-80" />
+            <span className="truncate">{job.city}, {job.province}</span>
+          </div>
+          <div className="flex items-center gap-2 text-[#6B3A2A]/80 font-medium">
+            <Clock size={13} className="text-[#C8782A] flex-shrink-0 opacity-80" />
+            <span>{job.employmentType}</span>
+          </div>
+          <div className="flex items-center gap-2 text-[#6B3A2A]/80 font-bold">
+            <DollarSign size={13} className="text-[#C8782A] flex-shrink-0 opacity-80" />
+            <span>{getSalaryDisplay(job.salary, job.salaryType)}</span>
+          </div>
+          <div className="flex items-center gap-2 text-[#6B3A2A]/60 font-medium">
+            <Calendar size={13} className="text-[#C8782A] flex-shrink-0 opacity-60" />
+            <span className="truncate">Posted: {formatDate(job.postedAt)}</span>
+          </div>
+        </div>
+        
+        <div className="flex flex-wrap gap-1.5 mt-3">
+          {job.remote && (
+            <Badge variant="outline" className="text-[10px] bg-blue-50/50 text-blue-700 border-blue-100 rounded-md font-medium px-2 py-0">
+              <Wifi size={10} className="mr-1" /> Remote
+            </Badge>
+          )}
+          {job.indigenousOwned && (
+            <Badge variant="outline" className="text-[10px] bg-[#7A9E7E]/10 text-[#4a7a4e] border-[#7A9E7E]/20 rounded-md font-medium px-2 py-0">
+              <Leaf size={10} className="mr-1" /> Indigenous
+            </Badge>
+          )}
+        </div>
+      </CardContent>
+      
+      <CardFooter className="p-5 pt-0 flex gap-2 border-t border-neutral-50/50 bg-neutral-50/20">
+        <Button variant="outline" size="sm" onClick={onView} className="flex-1 h-9 rounded-xl border-neutral-200 font-semibold text-xs text-neutral-600 hover:bg-[#C8782A]/5 hover:text-[#C8782A] hover:border-[#C8782A]/20 transition-all cursor-pointer">
+          <Eye size={13} className="mr-1" /> View
+        </Button>
+        <Button variant="outline" size="sm" onClick={onEdit} className="flex-1 h-9 rounded-xl border-neutral-200 font-semibold text-xs text-neutral-600 hover:bg-[#C8782A]/5 hover:text-[#C8782A] hover:border-[#C8782A]/20 transition-all cursor-pointer">
+          <Edit size={13} className="mr-1" /> Edit
+        </Button>
+        <Button variant="destructive" size="sm" onClick={onDelete} className="flex-1 h-9 rounded-xl font-semibold text-xs bg-rose-50 text-rose-600 border border-rose-100 hover:bg-rose-600 hover:text-white transition-all cursor-pointer">
+          <Trash2 size={13} className="mr-1" /> Delete
+        </Button>
+      </CardFooter>
+    </Card>
+  );
+}
+
+/* ── Delete Confirmation Modal ──────────────────────────────────────── */
+function DeleteConfirmModal({ open, onClose, onConfirm, jobTitle, isLoading }: { 
+  open: boolean; 
+  onClose: () => void; 
+  onConfirm: () => void; 
+  jobTitle: string;
+  isLoading: boolean;
+}) {
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-md rounded-2xl border-0 shadow-2xl p-6">
+        <DialogHeader>
+          <DialogTitle className="text-xl font-bold text-neutral-900">Delete Job Posting</DialogTitle>
+          <DialogDescription className="text-neutral-500 text-sm mt-2 leading-relaxed">
+            Are you sure you want to delete <strong className="text-[#C8782A] font-bold">&quot;{jobTitle}&quot;</strong>? 
+            This action cannot be undone and will remove it from search listings.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter className="flex gap-2 sm:justify-end mt-4">
+          <Button variant="outline" onClick={onClose} disabled={isLoading} className="rounded-xl h-10 border-neutral-200 text-neutral-600 font-medium">
+            Cancel
+          </Button>
+          <Button variant="destructive" onClick={onConfirm} disabled={isLoading} className="rounded-xl h-10 bg-rose-600 hover:bg-rose-700 font-semibold">
+            {isLoading ? <Loader2 size={15} className="animate-spin mr-2" /> : <Trash2 size={15} className="mr-2" />}
+            Delete Permanently
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/* ── Main Dashboard Component ───────────────────────────────────────── */
+export default function EmployerDashboard() {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [jobToDelete, setJobToDelete] = useState<Job | null>(null);
+  const [viewJob, setViewJob] = useState<Job | null>(null);
+  const itemsPerPage = 10;
+
+  const { session, isPending: sessionLoading } = useSession();
+
+  // Fetch employer's jobs
+  const { data: jobsData, isLoading: jobsLoading } = useQuery({
+    queryKey: ['employer-jobs', statusFilter, searchQuery, currentPage],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (statusFilter !== 'all') params.append('status', statusFilter);
+      if (searchQuery) params.append('search', searchQuery);
+      params.append('page', currentPage.toString());
+      params.append('limit', itemsPerPage.toString());
+      
+      const res = await fetch(`/api/employer/jobs?${params.toString()}`);
+      if (!res.ok) throw new Error('Failed to fetch jobs');
+      return res.json();
+    },
+    enabled: !!session?.user,
+  });
+
+  // Fetch stats
+  const { data: statsData } = useQuery({
+    queryKey: ['employer-stats'],
+    queryFn: async () => {
+      const res = await fetch('/api/employer/stats');
+      if (!res.ok) throw new Error('Failed to fetch stats');
+      return res.json();
+    },
+    enabled: !!session?.user,
+  });
+  
+
+
+  // Delete mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (jobId: string) => {
+      const res = await fetch(`/api/jobs/${jobId}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Failed to delete job');
+      return res.json();
+    },
+    onSuccess: () => {
+      toast.success('Job deleted successfully');
+      queryClient.invalidateQueries({ queryKey: ['employer-jobs'] });
+      queryClient.invalidateQueries({ queryKey: ['employer-stats'] });
+      setJobToDelete(null);
+    },
+    onError: () => {
+      toast.error('Failed to delete job');
+    },
+  });
+const statusMutation = useMutation({
+  mutationFn: async ({ jobId, status }: { jobId: string; status: string }) => {
+    const res = await fetch(`/api/jobs/${jobId}/status`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status }),
+    });
+    if (!res.ok) throw new Error('Failed to update status');
+    return res.json();
+  },
+  onSuccess: () => {
+    toast.success('Job status updated');
+    queryClient.invalidateQueries({ queryKey: ['employer-jobs'] });
+    queryClient.invalidateQueries({ queryKey: ['employer-stats'] });
+  },
+  onError: () => {
+    toast.error('Failed to update status');
+  },
+});
+
+  const jobs = jobsData?.jobs || [];
+  const pagination = jobsData?.pagination || { total: 0, totalPages: 1 };
+  const stats = statsData?.stats || { totalJobs: 0, activeJobs: 0, closedJobs: 0 };
+
+  const handleDelete = () => {
+    if (jobToDelete) {
+      deleteMutation.mutate(jobToDelete._id);
+    }
+  };
+
+  const handleEdit = (jobId: string) => {
+    router.push(`/post-a-job?id=${jobId}`);
+  };
+
+const handleStatusChange = (jobId: string, newStatus: string) => {
+  statusMutation.mutate({ jobId, status: newStatus });
+};
+
+  if (sessionLoading) {
+    return (
+      <div className="min-h-[70vh] flex items-center justify-center bg-white">
+        <div className="text-center">
+          <Loader2 size={36} className="animate-spin text-[#C8782A] mx-auto mb-3 opacity-80" />
+          <p className="text-sm font-medium text-[#6B3A2A]/70">Loading workspace dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!session?.user) {
+    return (
+      <div className="min-h-[70vh] flex items-center justify-center bg-white p-4">
+        <div className="text-center max-w-sm w-full border border-[#C8782A]/10 p-8 rounded-2xl bg-[#FAF5EE]/20 shadow-sm">
+          <AlertCircle size={44} className="text-amber-600 mx-auto mb-4 opacity-90" />
+          <h2 className="text-xl font-bold text-[#1C1C1C] tracking-wide">Authentication Required</h2>
+          <p className="text-sm text-[#6B3A2A]/70 mt-1.5 leading-relaxed">Please authenticate your account session to safely load your employer console.</p>
+          <Link href="/login" className="block mt-5">
+            <Button className="w-full h-11 bg-[#C8782A] hover:bg-[#B06820] text-white font-semibold rounded-xl shadow-md shadow-[#C8782A]/10">
+              Go to Login
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <ViewJobModal job={viewJob} open={!!viewJob} onClose={() => setViewJob(null)} />
+
+      <DeleteConfirmModal
+        open={!!jobToDelete}
+        onClose={() => setJobToDelete(null)}
+        onConfirm={handleDelete}
+        jobTitle={jobToDelete?.title || ''}
+        isLoading={deleteMutation.isPending}
+      />
+
+      <div className="bg-gradient-to-b from-[#FAF5EE]/70 to-white border-b border-neutral-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-5">
+            <div>
+              <h1 className="text-3xl font-extrabold text-[#1C1C1C] tracking-tight" style={{ fontFamily: "'Playfair Display', serif" }}>
+                Employer Dashboard
+              </h1>
+              <p className="text-sm font-medium text-[#6B3A2A]/60 mt-1">
+                Workspace panel • Welcome back, <span className="text-[#C8782A] font-bold">{session.user.name || session.user.email}</span>
+              </p>
+            </div>
+            <Link href="/post-a-job">
+              <Button className="bg-[#C8782A] hover:bg-[#B06820] text-white font-bold h-11 px-5 rounded-xl shadow-md shadow-[#C8782A]/15 active:scale-[0.99] transition-all cursor-pointer">
+                <Plus size={16} className="mr-2 stroke-[2.5]" />
+                Post New Job
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Metric Statistics Cards Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-8">
+          <StatCard title="Total Jobs" value={stats.totalJobs} icon={<Briefcase size={18} />} />
+          <StatCard title="Active Jobs" value={stats.activeJobs} icon={<CheckCircle size={18} className="text-emerald-600" />} />
+          <StatCard title="Closed Jobs" value={stats.closedJobs} icon={<X size={18} className="text-neutral-500" />} />
+        </div>
+
+        {/* Dynamic Filter Controls Layout */}
+        <div className="flex flex-col sm:flex-row gap-3 mb-6">
+          <div className="relative flex-1">
+            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#6B3A2A]/50" />
+            <Input
+              placeholder="Search postings by title, company, or city..."
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="pl-10 h-11 border-neutral-200 focus-visible:ring-[#C8782A]/30 text-sm rounded-xl placeholder:text-neutral-400"
+            />
+          </div>
+          <div className="relative">
+            <select
+              value={statusFilter}
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="h-11 pl-4 pr-10 rounded-xl border border-neutral-200 bg-white text-sm font-semibold text-[#1C1C1C] focus:outline-none focus:ring-2 focus:ring-[#C8782A]/20 focus:border-[#C8782A] appearance-none min-w-[140px] cursor-pointer"
+            >
+              <option value="all">All Status</option>
+              <option value="active">Active Only</option>
+              <option value="closed">Closed Only</option>
+              <option value="expired">Expired Only</option>
+            </select>
+            <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none border-l border-neutral-200 pl-2 text-neutral-500">
+              <ChevronRight size={14} className="rotate-90" />
+            </div>
+          </div>
+        </div>
+
+        {/* Core Processing States Render */}
+        {jobsLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {[...Array(4)].map((_, i) => (
+              <Card key={i} className="border border-neutral-100 rounded-2xl p-5 space-y-4">
+                <div className="space-y-2">
+                  <Skeleton className="h-5 w-3/4 rounded-md" />
+                  <Skeleton className="h-4 w-1/2 rounded-md" />
+                </div>
+                <div className="space-y-2 pt-2 border-y border-neutral-50 py-3">
+                  <Skeleton className="h-4 w-full rounded-md" />
+                  <Skeleton className="h-4 w-2/3 rounded-md" />
+                </div>
+                <div className="flex gap-2 pt-2">
+                  <Skeleton className="h-9 flex-1 rounded-xl" />
+                  <Skeleton className="h-9 flex-1 rounded-xl" />
+                  <Skeleton className="h-9 flex-1 rounded-xl" />
+                </div>
+              </Card>
+            ))}
+          </div>
+        ) : jobs.length === 0 ? (
+          <Card className="border border-dashed border-[#C8782A]/20 bg-[#FAF5EE]/10 text-center py-16 rounded-2xl">
+            <CardContent className="p-6">
+              <div className="w-14 h-14 bg-[#FAF5EE] border border-[#C8782A]/10 rounded-full flex items-center justify-center mx-auto mb-4 text-[#C8782A]/70">
+                <Briefcase size={24} />
+              </div>
+              <h3 className="text-xl font-bold text-[#1C1C1C]">No listings match criteria</h3>
+              <p className="text-sm text-[#6B3A2A]/70 mt-1 max-w-sm mx-auto leading-relaxed">
+                {searchQuery || statusFilter !== 'all' 
+                  ? "We couldn't find anything matching your search. Try resetting filters." 
+                  : "You haven't initialized any job listings on your business dashboard."}
+              </p>
+              {!searchQuery && statusFilter === 'all' && (
+                <Link href="/post-a-job" className="inline-block mt-5">
+                  <Button className="bg-[#C8782A] hover:bg-[#B06820] text-white font-semibold rounded-xl h-10 px-5 shadow-sm">
+                    <Plus size={15} className="mr-1.5" /> Post Your First Job
+                  </Button>
+                </Link>
+              )}
+            </CardContent>
+          </Card>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+{jobs.map((job: Job) => (
+  <JobCard
+    key={job._id}
+    job={job}
+    onView={() => setViewJob(job)}
+    onEdit={() => handleEdit(job._id)}
+    onDelete={() => setJobToDelete(job)}
+    onStatusChange={handleStatusChange}  
+  />
+))}
+            </div>
+
+            {/* Pagination Controls Wrapper */}
+            {pagination.totalPages > 1 && (
+              <div className="flex justify-center items-center gap-1.5 mt-10">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="border-neutral-200 h-9 w-9 rounded-xl p-0 flex items-center justify-center"
+                >
+                  <ChevronLeft size={16} />
+                </Button>
+                <div className="bg-neutral-50 border border-neutral-100 rounded-xl px-4 h-9 flex items-center justify-center text-xs font-bold text-neutral-700 shadow-sm">
+                  Page {currentPage} of {pagination.totalPages}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(p => Math.min(pagination.totalPages, p + 1))}
+                  disabled={currentPage === pagination.totalPages}
+                  className="border-neutral-200 h-9 w-9 rounded-xl p-0 flex items-center justify-center"
+                >
+                  <ChevronRight size={16} />
+                </Button>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </>
+  );
+}

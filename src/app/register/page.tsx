@@ -11,7 +11,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-// import { signUp } from '@/lib/auth/auth-client';
 import { InputOTP, InputOTPGroup, InputOTPSlot, InputOTPSeparator } from "@/components/ui/input-otp";
 
 /* ── Types ──────────────────────────────────────────────────────────── */
@@ -184,6 +183,7 @@ function RegisterForm() {
   const [otpCountdown, setOtpCountdown] = useState(0);
   const [otpSentMsg, setOtpSentMsg] = useState('');
   const [devOtp, setDevOtp] = useState('');
+  const [emailForOtp, setEmailForOtp] = useState(''); // Store email for OTP resend
 
   const [form, setForm] = useState<FormData>({
     firstName: '',
@@ -195,6 +195,24 @@ function RegisterForm() {
     confirmPassword: '',
     agreeTerms: false,
   });
+
+  useEffect(() => {
+    if (step === 3) {
+      // Push a new state to prevent back navigation
+      window.history.pushState(null, '', window.location.href);
+      
+      const handlePopState = (event: PopStateEvent) => {
+        // When back button is pressed on step 3, push state again
+        window.history.pushState(null, '', window.location.href);
+        // Show a warning message
+        setServerError('Please complete verification or use the "Continue" button.');
+        setTimeout(() => setServerError(''), 3000);
+      };
+      
+      window.addEventListener('popstate', handlePopState);
+      return () => window.removeEventListener('popstate', handlePopState);
+    }
+  }, [step]);
 
   // Countdown timer for Resend OTP
   useEffect(() => {
@@ -225,6 +243,8 @@ function RegisterForm() {
       setLoading(true);
       setServerError('');
       setOtpSentMsg('');
+      setEmailForOtp(form.email); // Store email for resend
+      
       try {
         const res = await fetch('/api/auth/otp/send', {
           method: 'POST',
@@ -265,7 +285,7 @@ function RegisterForm() {
       setLoading(true);
       setServerError('');
       try {
-        // Verify the OTP in backend
+        // Verify the OTP
         const verifyRes = await fetch('/api/auth/otp/verify', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -279,12 +299,10 @@ function RegisterForm() {
           return;
         }
 
+        // Register the employer
         const registerRes = await fetch('/api/auth/register-employer', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             firstName: form.firstName,
             lastName: form.lastName,
@@ -298,10 +316,7 @@ function RegisterForm() {
         const registerData = await registerRes.json();
 
         if (!registerRes.ok) {
-          setServerError(
-            registerData.error || 'Registration failed.'
-          );
-
+          setServerError(registerData.error || 'Registration failed.');
           setLoading(false);
           return;
         }
@@ -323,7 +338,7 @@ function RegisterForm() {
       const res = await fetch('/api/auth/otp/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: form.email }),
+        body: JSON.stringify({ email: emailForOtp || form.email }),
       });
       const data = await res.json();
 
@@ -339,6 +354,7 @@ function RegisterForm() {
 
       setOtpCountdown(60);
       setOtpSentMsg('A new 6-digit verification code has been sent to your email.');
+      setOtpVal(''); 
     } catch {
       setServerError('Failed to resend code. Please try again.');
     } finally {
@@ -346,7 +362,14 @@ function RegisterForm() {
     }
   };
 
+  // Back button - disabled on step 3
   const goBack = () => {
+    if (step === 3) {
+      // No back navigation on OTP step
+      setServerError('Cannot go back after verification step. Please complete verification.');
+      setTimeout(() => setServerError(''), 3000);
+      return;
+    }
     setDirection(-1);
     setStep((s) => s - 1);
     setErrors({});
@@ -379,7 +402,6 @@ function RegisterForm() {
             </p>
             <p className="text-[#C8782A] font-semibold mb-6">{form.email}</p>
 
-            {/* Next steps */}
             <div className="bg-[#FAF5EE] rounded-2xl p-5 mb-7 text-left">
               <p className="text-xs font-semibold text-[#6B3A2A]/50 uppercase tracking-wider mb-3">
                 Your next steps
@@ -467,7 +489,6 @@ function RegisterForm() {
               {/* ── STEP 1: Personal / org details ───────────────── */}
               {step === 1 && (
                 <div className="flex flex-col gap-5">
-                  {/* Name */}
                   <div className="grid grid-cols-2 gap-4">
                     <div className="flex flex-col gap-1.5">
                       <Label htmlFor="reg-first" className="text-[#6B3A2A] font-medium text-sm">
@@ -497,7 +518,6 @@ function RegisterForm() {
                     </div>
                   </div>
 
-                  {/* Org name */}
                   <div className="flex flex-col gap-1.5">
                     <Label htmlFor="reg-org" className="text-[#6B3A2A] font-medium text-sm">
                       Organization Name <span className="text-[#C8782A]">*</span>
@@ -512,7 +532,6 @@ function RegisterForm() {
                     <FieldError msg={errors.orgName} />
                   </div>
 
-                  {/* Province */}
                   <div className="flex flex-col gap-1.5">
                     <Label htmlFor="reg-province" className="text-[#6B3A2A] font-medium text-sm">
                       Province / Territory <span className="text-[#C8782A]">*</span>
@@ -534,14 +553,12 @@ function RegisterForm() {
               {/* ── STEP 2: Credentials ───────────────────────────── */}
               {step === 2 && (
                 <div className="flex flex-col gap-5">
-                  {/* Server error */}
                   {serverError && (
                     <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3">
                       <AlertCircle size={15} className="flex-shrink-0" />
                       {serverError}
                     </div>
                   )}
-                  {/* Email */}
                   <div className="flex flex-col gap-1.5">
                     <Label htmlFor="reg-email" className="text-[#6B3A2A] font-medium text-sm">
                       Email Address <span className="text-[#C8782A]">*</span>
@@ -558,7 +575,6 @@ function RegisterForm() {
                     <FieldError msg={errors.email} />
                   </div>
 
-                  {/* Password */}
                   <div className="flex flex-col gap-1.5">
                     <Label htmlFor="reg-password" className="text-[#6B3A2A] font-medium text-sm">
                       Password <span className="text-[#C8782A]">*</span>
@@ -586,7 +602,6 @@ function RegisterForm() {
                     <FieldError msg={errors.password} />
                   </div>
 
-                  {/* Confirm password */}
                   <div className="flex flex-col gap-1.5">
                     <Label htmlFor="reg-confirm" className="text-[#6B3A2A] font-medium text-sm">
                       Confirm Password <span className="text-[#C8782A]">*</span>
@@ -613,7 +628,6 @@ function RegisterForm() {
                     <FieldError msg={errors.confirmPassword} />
                   </div>
 
-                  {/* Terms */}
                   <div className="flex flex-col gap-1">
                     <label className="flex items-start gap-2.5 cursor-pointer">
                       <input
@@ -634,7 +648,7 @@ function RegisterForm() {
                 </div>
               )}
 
-              {/* ── STEP 3: OTP Verification ─────────────────────── */}
+              {/* ── STEP 3: OTP Verification (No Back Button) ─────── */}
               {step === 3 && (
                 <div className="flex flex-col items-center gap-5">
                   <div className="w-12 h-12 rounded-full bg-[#C8782A]/10 flex items-center justify-center">
@@ -662,7 +676,7 @@ function RegisterForm() {
                     </div>
                   )}
 
-                  {/* Stunning InputOTP Slot Component */}
+                  {/* InputOTP Component */}
                   <div className="my-3">
                     <InputOTP
                       maxLength={6}
@@ -671,15 +685,15 @@ function RegisterForm() {
                       disabled={loading}
                     >
                       <InputOTPGroup>
-                        <InputOTPSlot index={0} className="border-[#C8782A]/30 focus:border-[#C8782A]" />
-                        <InputOTPSlot index={1} className="border-[#C8782A]/30 focus:border-[#C8782A]" />
-                        <InputOTPSlot index={2} className="border-[#C8782A]/30 focus:border-[#C8782A]" />
+                        <InputOTPSlot index={0} className="border-[#C8782A]/30 focus:border-[#C8782A] w-10 h-12 sm:w-12 sm:h-14 text-lg" />
+                        <InputOTPSlot index={1} className="border-[#C8782A]/30 focus:border-[#C8782A] w-10 h-12 sm:w-12 sm:h-14 text-lg" />
+                        <InputOTPSlot index={2} className="border-[#C8782A]/30 focus:border-[#C8782A] w-10 h-12 sm:w-12 sm:h-14 text-lg" />
                       </InputOTPGroup>
                       <InputOTPSeparator />
                       <InputOTPGroup>
-                        <InputOTPSlot index={3} className="border-[#C8782A]/30 focus:border-[#C8782A]" />
-                        <InputOTPSlot index={4} className="border-[#C8782A]/30 focus:border-[#C8782A]" />
-                        <InputOTPSlot index={5} className="border-[#C8782A]/30 focus:border-[#C8782A]" />
+                        <InputOTPSlot index={3} className="border-[#C8782A]/30 focus:border-[#C8782A] w-10 h-12 sm:w-12 sm:h-14 text-lg" />
+                        <InputOTPSlot index={4} className="border-[#C8782A]/30 focus:border-[#C8782A] w-10 h-12 sm:w-12 sm:h-14 text-lg" />
+                        <InputOTPSlot index={5} className="border-[#C8782A]/30 focus:border-[#C8782A] w-10 h-12 sm:w-12 sm:h-14 text-lg" />
                       </InputOTPGroup>
                     </InputOTP>
                   </div>
@@ -703,15 +717,13 @@ function RegisterForm() {
                     )}
                   </div>
 
+                  {/* Dev OTP for testing */}
                   {/* {devOtp && (
                     <div className="w-full bg-[#FAF5EE] border border-[#C8782A]/20 rounded-xl p-3.5 text-left mt-2">
                       <p className="text-[10px] font-bold text-[#C8782A] uppercase tracking-wider mb-1">
-                        🛠️ Development Sandbox Mode
+                        🛠️ Development Mode
                       </p>
-                      <p className="text-xs text-[#6B3A2A]/70 leading-relaxed">
-                        SMTP credentials not configured. Code logged to terminal console.
-                      </p>
-                      <p className="text-xs font-semibold mt-1">
+                      <p className="text-xs text-[#6B3A2A]/70">
                         Use this code to test: <span className="text-[#C8782A] font-mono text-sm tracking-wider font-bold">{devOtp}</span>
                       </p>
                     </div>
@@ -721,9 +733,9 @@ function RegisterForm() {
             </motion.div>
           </AnimatePresence>
 
-          {/* Navigation buttons */}
-          <div className={`flex gap-3 px-8 pb-8 ${step > 1 ? 'justify-between' : 'justify-end'}`}>
-            {step > 1 && (
+          {/* Navigation buttons - Back button hidden on step 3 */}
+          <div className={`flex gap-3 px-8 pb-8 ${step > 1 && step !== 3 ? 'justify-between' : 'justify-end'}`}>
+            {step > 1 && step !== 3 && (
               <Button
                 type="button"
                 variant="outline"

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'motion/react';
@@ -13,6 +13,7 @@ import {
   AlertCircle, Code2, Briefcase, Phone, MessageCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { formatDate } from 'date-fns';
 
 /* ── Types ──────────────────────────────────────────────────────────── */
 
@@ -72,6 +73,19 @@ function ApplyModal({
   company,
   applyMethods
 }: ApplyModalProps) {
+
+    //Background Scroll Prevention
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
+  
 
   const getMethodIcon = (method: string) => {
     switch (method) {
@@ -515,9 +529,17 @@ export default function JobDetailPage() {
                   <Share2 size={14} className="mr-1" />
                   {copied ? 'Copied!' : 'Share'}
                 </Button>
-                <p className="text-xs text-[#6B3A2A]/45 text-center">
+                {/* <p className="text-xs text-[#6B3A2A]/45 text-center">
                   Posted {postedLabel(job.postDate || job.postedAt)}
-                </p>
+                </p> */}
+               <p className="text-xs text-[#6B3A2A]/45 text-center">
+  Posted on{" "}
+  {new Date(job.postDate).toLocaleDateString("en-US", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  })}
+</p>
               </div>
             </div>
           </motion.div>
@@ -646,7 +668,15 @@ export default function JobDetailPage() {
                   <div className="flex flex-col gap-2.5 text-sm">
                     <div className="flex items-center gap-2.5 text-[#6B3A2A]/65">
                       <Clock size={14} className="text-[#C8782A] flex-shrink-0" />
-                      <span>Posted {postedLabel(job.postDate || job.postedAt)}</span>
+                      <span  className="text-xs text-[#6B3A2A]/45 text-center">
+  Posted on{" "}
+  {new Date(job.postDate).toLocaleDateString("en-US", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  })}
+</span>
+                      {/* <span>Posted {postedLabel(job.postDate || job.postedAt)}</span> */}
                     </div>
                     {job.expiresAt && (
                       <div className="flex items-center gap-2.5 text-[#6B3A2A]/65">
