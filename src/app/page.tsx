@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { motion, useInView } from "motion/react";
+import { AnimatePresence, motion, useInView } from "motion/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
@@ -17,6 +17,7 @@ import {
   Quote,
   Code2,
   Calendar,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -336,11 +337,21 @@ export default function HomePage() {
   const featuredJobs = jobsResponse?.data || [];
   const searchResultsList = searchResults?.data || [];
 
-  const handleSearch = () => {
-    if (searchQuery || searchLocation) {
-      searchJobs();
-      setShowSearchResults(true);
-    }
+  const handleSearch = async () => {
+    if (!searchQuery && !searchLocation) return;
+
+    setShowSearchResults(true);
+
+    await searchJobs();
+
+    // smooth scroll after results render
+    setTimeout(() => {
+      const resultsSection = document.getElementById("search-results");
+      resultsSection?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 200);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -358,7 +369,8 @@ export default function HomePage() {
   return (
     <>
       {/* ── 1. HERO ─────────────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden min-h-[92vh] flex items-center">
+      <section className="relative overflow-hidden min-h-[92vh] flex items-center bg-[#1C1C1C]">
+        {/* Background Image */}
         <img
           src="https://images.unsplash.com/photo-1630673470267-417e4d361129?q=80&w=1171&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
           alt=""
@@ -368,34 +380,40 @@ export default function HomePage() {
             (e.target as HTMLImageElement).style.display = "none";
           }}
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-gray-900/85 via-gray-900/60 to-gray-900/20" />
-        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-gray-900/50 to-transparent" />
 
-        <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-32">
+        {/* Gradient Overlay for Text Readability on Mobile */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/80 lg:bg-gradient-to-r lg:from-black/80 lg:via-black/40 lg:to-transparent" />
+
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-22">
           <motion.div
             variants={stagger}
             initial="hidden"
             animate="visible"
-            className="max-w-2xl"
+            className="max-w-2xl text-left"
           >
+            {/* Subtitle */}
             <motion.p
               variants={fadeUp}
-              className="text-[#C8782A] font-semibold text-sm uppercase tracking-widest mb-5 flex items-center gap-2"
+              className="text-[#C8782A] font-semibold text-xs sm:text-sm uppercase tracking-widest mb-4 sm:mb-5 flex items-center gap-2"
             >
               Canada's Indigenous Job Platform
             </motion.p>
+
+            {/* Main Heading */}
             <motion.h1
               variants={fadeUp}
-              className="text-5xl sm:text-6xl lg:text-7xl font-bold text-white leading-tight mb-6"
+              className="text-4xl sm:text-6xl lg:text-7xl font-bold text-white leading-tight mb-4 sm:mb-6"
               style={{ fontFamily: "'Playfair Display', serif" }}
             >
               Your Career
               <br />
               <span className="text-[#C8782A]">Starts Here.</span>
             </motion.h1>
+
+            {/* Description */}
             <motion.p
               variants={fadeUp}
-              className="text-lg text-white/80 leading-relaxed mb-10 max-w-xl"
+              className="text-base sm:text-lg text-white/90 leading-relaxed mb-8 sm:mb-10 max-w-xl"
             >
               Connecting First Nations, Métis, and Inuit job seekers with
               inclusive employers across every province and territory in Canada.
@@ -404,53 +422,69 @@ export default function HomePage() {
             {/* Search Bar */}
             <motion.div
               variants={fadeUp}
-              className="bg-white rounded-2xl shadow-2xl p-2 flex flex-col sm:flex-row gap-2 max-w-2xl mb-8"
+              className="bg-white rounded-xl sm:rounded-2xl shadow-2xl p-2 flex flex-col sm:flex-row gap-2 max-w-2xl mb-8"
             >
-              <div className="flex items-center gap-2 flex-1 px-3">
+              <div className="flex items-center gap-2 flex-1 px-3 py-1.5 sm:py-0">
                 <Search size={18} className="text-[#C8782A] flex-shrink-0" />
                 <Input
                   placeholder="Job title, keyword, or company"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  className="border-0 shadow-none focus-visible:ring-0 bg-transparent text-[#1C1C1C] placeholder:text-[#1C1C1C]/40"
+                  className="border-0 shadow-none focus-visible:ring-0 bg-transparent text-[#1C1C1C] placeholder:text-[#1C1C1C]/50 w-full h-9 sm:h-10"
                 />
               </div>
+
+              {/* Divider - Hidden on Mobile */}
+              <div className="h-px bg-[#C8782A]/20 mx-3 sm:hidden" />
               <div className="w-px bg-[#C8782A]/20 hidden sm:block" />
-              <div className="flex items-center gap-2 flex-1 px-3">
+
+              <div className="flex items-center gap-2 flex-1 px-3 py-1.5 sm:py-0">
                 <MapPin size={18} className="text-[#C8782A] flex-shrink-0" />
                 <Input
                   placeholder="City, province, or territory"
                   value={searchLocation}
                   onChange={(e) => setSearchLocation(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  className="border-0 shadow-none focus-visible:ring-0 bg-transparent text-[#1C1C1C] placeholder:text-[#1C1C1C]/40"
+                  className="border-0 shadow-none focus-visible:ring-0 bg-transparent text-[#1C1C1C] placeholder:text-[#1C1C1C]/50 w-full h-9 sm:h-10"
                 />
               </div>
+
               <Button
                 onClick={handleSearch}
-                className="bg-[#C8782A] hover:bg-[#B06820] text-white font-semibold px-6 rounded-xl shrink-0"
+                disabled={isSearching}
+                className="bg-[#C8782A] hover:bg-[#B06820] text-white font-semibold px-6 py-2.5 sm:py-0 rounded-lg sm:rounded-xl shrink-0 w-full sm:w-auto transition-all duration-300 disabled:opacity-80"
               >
-                Search Jobs
+                {isSearching ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <Loader2 size={18} className="animate-spin" />
+                    Searching...
+                  </span>
+                ) : (
+                  "Search Jobs"
+                )}
               </Button>
             </motion.div>
 
             {/* CTA Buttons */}
-            <motion.div variants={fadeUp} className="flex flex-wrap gap-3">
-              <Link href="/jobs">
+            <motion.div
+              variants={fadeUp}
+              className="flex flex-col sm:flex-row gap-3"
+            >
+              <Link href="/jobs" className="w-full sm:w-auto">
                 <Button
                   size="lg"
-                  className="bg-[#C8782A] hover:bg-[#B06820] text-white font-semibold px-8 shadow-lg hover:shadow-xl transition-all duration-200 hover:-translate-y-0.5"
+                  className="bg-[#C8782A] hover:bg-[#B06820] text-white font-semibold px-8 py-6 sm:py-3 shadow-lg hover:shadow-xl transition-all duration-200 hover:-translate-y-0.5 w-full flex justify-center items-center"
                 >
                   Find Jobs
                   <ArrowRight size={16} className="ml-2" />
                 </Button>
               </Link>
-              <Link href="/post-a-job">
+              <Link href="/post-a-job" className="w-full sm:w-auto">
                 <Button
                   size="lg"
                   variant="outline"
-                  className="border-2 border-white text-white hover:bg-white hover:text-[#6B3A2A] font-semibold px-8 transition-all duration-200 hover:-translate-y-0.5 bg-transparent"
+                  className="border-2 border-white text-white hover:bg-white hover:text-[#6B3A2A] font-semibold px-8 py-6 sm:py-3 transition-all duration-200 hover:-translate-y-0.5 bg-transparent w-full flex justify-center items-center"
                 >
                   Post a Job
                 </Button>
@@ -463,22 +497,24 @@ export default function HomePage() {
             variants={stagger}
             initial="hidden"
             animate="visible"
-            className="mt-16 grid grid-cols-2 lg:grid-cols-4 gap-6 max-w-2xl"
+            className="mt-12 sm:mt-16 grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6 max-w-2xl"
           >
             {statsData.map((stat) => (
               <motion.div
                 key={stat.label}
                 variants={fadeUp}
-                className="text-left"
+                className="text-left bg-black/20 sm:bg-transparent p-3 sm:p-0 rounded-xl backdrop-blur-sm sm:backdrop-blur-none"
               >
                 <p
-                  className="text-3xl font-bold text-white"
+                  className="text-2xl sm:text-3xl font-bold text-white"
                   style={{ fontFamily: "'Playfair Display', serif" }}
                 >
                   <Counter target={stat.value} />
                   {stat.suffix}
                 </p>
-                <p className="text-sm text-white/60 mt-0.5">{stat.label}</p>
+                <p className="text-xs sm:text-sm text-white/70 mt-0.5">
+                  {stat.label}
+                </p>
               </motion.div>
             ))}
           </motion.div>
@@ -486,75 +522,109 @@ export default function HomePage() {
       </section>
 
       {/* ── Search Results Section ───────────────────────────────────────────── */}
-      {showSearchResults && (
-        <section className="bg-white py-10">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between mb-6">
-              <h2
-                className="text-2xl font-bold text-[#1C1C1C]"
-                style={{ fontFamily: "'Playfair Display', serif" }}
-              >
-                Search Results
-                {searchResultsList.length > 0 && (
-                  <span className="text-[#C8782A] text-lg ml-2">
-                    ({searchResultsList.length})
-                  </span>
-                )}
-              </h2>
-              <button
-                onClick={clearSearch}
-                className="text-sm text-[#C8782A] hover:underline font-medium"
-              >
-                Clear Search
-              </button>
+      <AnimatePresence>
+        {showSearchResults && (
+          <motion.section
+            id="search-results"
+            initial={{ opacity: 0, y: 70 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 40 }}
+            transition={{
+              duration: 0.5,
+              ease: "easeOut",
+            }}
+            className="bg-white py-10"
+          >
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="flex items-center justify-between mb-6">
+                <h2
+                  className="text-2xl font-bold text-[#1C1C1C]"
+                  style={{ fontFamily: "'Playfair Display', serif" }}
+                >
+                  Search Results
+                  {searchResultsList.length > 0 && (
+                    <span className="text-[#C8782A] text-lg ml-2">
+                      ({searchResultsList.length})
+                    </span>
+                  )}
+                </h2>
+
+                <button
+                  onClick={clearSearch}
+                  className="text-sm text-[#C8782A] hover:underline font-medium"
+                >
+                  Clear Search
+                </button>
+              </div>
+
+              {isSearching ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  {[1, 2, 3, 4].map((i) => (
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, y: 15 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.08 }}
+                      className="rounded-2xl border border-[#C8782A]/10 bg-white p-5 animate-pulse"
+                    >
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="w-11 h-11 rounded-xl bg-[#FAF5EE]" />
+                        <div className="w-16 h-5 bg-[#FAF5EE] rounded-full" />
+                      </div>
+
+                      <div className="h-5 w-3/4 bg-[#FAF5EE] rounded mb-2" />
+                      <div className="h-4 w-1/3 bg-[#FAF5EE] rounded mb-3" />
+
+                      <div className="grid grid-cols-2 gap-3 mb-4">
+                        <div className="h-4 w-full bg-[#FAF5EE] rounded" />
+                        <div className="h-4 w-full bg-[#FAF5EE] rounded" />
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              ) : searchResultsList.length > 0 ? (
+                <motion.div
+                  layout
+                  className="grid grid-cols-1 sm:grid-cols-2 gap-5"
+                >
+                  {searchResultsList.map((job: any, index: number) => (
+                    <motion.div
+                      key={job._id}
+                      initial={{ opacity: 0, y: 30 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{
+                        duration: 0.35,
+                        delay: index * 0.05,
+                      }}
+                    >
+                      <JobSearchCard job={job} />
+                    </motion.div>
+                  ))}
+                </motion.div>
+              ) : (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="text-center py-12"
+                >
+                  <p className="text-[#6B3A2A]/60">
+                    No jobs found matching your search.
+                  </p>
+
+                  <Link href="/jobs">
+                    <Button
+                      variant="outline"
+                      className="mt-4 border-[#C8782A]/30 text-[#C8782A]"
+                    >
+                      Browse All Jobs
+                    </Button>
+                  </Link>
+                </motion.div>
+              )}
             </div>
-
-            {isSearching ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                {[1, 2, 3, 4].map((i) => (
-                  <div
-                    key={i}
-                    className="rounded-2xl border border-[#C8782A]/10 bg-white p-5 animate-pulse"
-                  >
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="w-11 h-11 rounded-xl bg-[#FAF5EE]" />
-                      <div className="w-16 h-5 bg-[#FAF5EE] rounded-full" />
-                    </div>
-                    <div className="h-5 w-3/4 bg-[#FAF5EE] rounded mb-2" />
-                    <div className="h-4 w-1/3 bg-[#FAF5EE] rounded mb-3" />
-                    <div className="grid grid-cols-2 gap-3 mb-4">
-                      <div className="h-4 w-full bg-[#FAF5EE] rounded" />
-                      <div className="h-4 w-full bg-[#FAF5EE] rounded" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : searchResultsList.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                {searchResultsList.map((job: any) => (
-                  <JobSearchCard key={job._id} job={job} />
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-12">
-                <p className="text-[#6B3A2A]/60">
-                  No jobs found matching your search. Try different keywords or
-                  browse all jobs.
-                </p>
-                <Link href="/jobs">
-                  <Button
-                    variant="outline"
-                    className="mt-4 border-[#C8782A]/30 text-[#C8782A]"
-                  >
-                    Browse All Jobs
-                  </Button>
-                </Link>
-              </div>
-            )}
-          </div>
-        </section>
-      )}
-
+          </motion.section>
+        )}
+      </AnimatePresence>
       {/* ── DUAL CTA SPLIT ───────────────────────────────────────────────── */}
       <section className="bg-white py-16 lg:py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

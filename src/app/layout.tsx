@@ -40,6 +40,12 @@ export const metadata: Metadata = {
   creator: "Aboriginal Jobs Canada",
   publisher: "Aboriginal Jobs Canada",
 
+  icons: {
+    icon: "/logo.svg",
+    shortcut: "/logo.svg",
+    apple: "/logo.svg",
+  },
+
   robots: {
     index: true,
     follow: true,
