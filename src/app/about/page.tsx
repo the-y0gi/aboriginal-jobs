@@ -95,14 +95,14 @@ const team = [
     name: "Nikunj Desai",
     role: "Co-Founder & CEO",
     nation: "Cree Nation, Treaty 6",
-    bio: "Sarah brings 15 years of experience in Indigenous economic development and workforce strategy across Western Canada.",
+    bio: "Nikunj brings 15 years of experience in Indigenous economic development and workforce strategy across Western Canada.",
     initials: "ND",
   },
   {
     name: "Sanket Kasvala",
     role: "Co-Founder & CTO",
     nation: "Métis Nation of Alberta",
-    bio: "Marcus leads our technology vision, building platforms that centre Indigenous user experience and cultural safety.",
+    bio: "Sanket leads our technology vision, building platforms that centre Indigenous user experience and cultural safety.",
     initials: "SK",
   },
   // {

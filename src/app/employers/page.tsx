@@ -37,7 +37,7 @@ export default function EmployersPage() {
       {/* Hero */}
       <section className="bg-[#6B3A2A] py-20 lg:py-28 relative overflow-hidden">
         <OrganicShape className="absolute -right-24 top-1/2 -translate-y-1/2 w-[480px] h-[480px] text-[#C8782A] pointer-events-none" />
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 lg:h-[60vh]">
           <motion.div variants={stagger} initial="hidden" animate="visible" className="max-w-2xl">
             <motion.div variants={fadeUp} className="inline-flex items-center gap-2 bg-white/15 rounded-full px-4 py-1.5 mb-6">
               <Building2 size={14} className="text-[#C8782A]" />
