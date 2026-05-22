@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "motion/react";
@@ -330,7 +330,7 @@ function formatDateForInput(date: string | Date): string {
 }
 
 /* ── Main page ──────────────────────────────────────────────────────── */
-export default function PostAJobPage() {
+function PostAJobContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const jobIdParam = searchParams?.get("id");
@@ -1423,5 +1423,22 @@ export default function PostAJobPage() {
         </div>
       </section>
     </>
+  );
+}
+
+export default function PostAJobPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-[60vh] flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C8782A] mx-auto mb-4" />
+            <p className="text-[#6B3A2A]/60">Loading...</p>
+          </div>
+        </div>
+      }
+    >
+      <PostAJobContent />
+    </Suspense>
   );
 }

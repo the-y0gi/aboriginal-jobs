@@ -1,8 +1,11 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
+import type ReactQuillType from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 
-const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false });
+const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false }) as unknown as React.ComponentType<
+  ReactQuillType['props'] & { ref?: React.Ref<ReactQuillType> }
+>;
 
 interface RichTextEditorProps {
   placeholder?: string;
@@ -49,7 +52,7 @@ export default function RichTextEditor({
   const [charCount, setCharCount] = useState(0);
   const [isLimitReached, setIsLimitReached] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const quillRef = useRef<any>(null);
+  const quillRef = useRef<ReactQuillType>(null);
   const isFirstRender = useRef(true);
 
   useEffect(() => {
