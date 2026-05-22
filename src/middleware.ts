@@ -3,20 +3,19 @@ import { NextRequest, NextResponse } from "next/server";
 export function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
 
-  // Session Token
-  const token = req.cookies.get("better-auth.session_token")?.value;
+  // Better Auth cookies
+  const token =
+    req.cookies.get("better-auth.session_token")?.value ||
+    req.cookies.get("__Secure-better-auth.session_token")?.value;
 
-  // Protected Routes
-  const protectedRoutes = [
-    "/post-a-job",
-    "/employers/dashboard",
-  ];
+  // Protected routes
+  const protectedRoutes = ["/post-a-job", "/employers/dashboard"];
 
   const isProtected = protectedRoutes.some((route) =>
-    pathname.startsWith(route)
+    pathname.startsWith(route),
   );
 
-  // Redirect to login if no session
+  // Redirect if not logged in
   if (isProtected && !token) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
@@ -25,8 +24,5 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    "/post-a-job/:path*",
-    "/employers/dashboard/:path*",
-  ],
+  matcher: ["/post-a-job/:path*", "/employers/dashboard/:path*"],
 };
