@@ -240,7 +240,7 @@ function LoginForm() {
           <Link href="/register?type=employer" className="w-full mt-5 block">
             <Button
               variant="outline"
-              className="w-full border-[#6B3A2A]/25 text-[#6B3A2A] hover:bg-[#6B3A2A]/5 hover:border-[#6B3A2A]/50 text-sm font-medium"
+              className="w-full border-[#6B3A2A]/25 text-[#6B3A2A] hover:bg-[#6B3A2A]/5 hover:text-black hover:border-[#6B3A2A]/50 text-sm font-medium"
             >
               Employer Sign Up
             </Button>
@@ -248,9 +248,9 @@ function LoginForm() {
 
           <p className="text-center text-xs text-[#6B3A2A]/40 mt-5 leading-relaxed">
             By signing in you agree to Aboriginal Jobs Canada's{' '}
-            <a href="#" className="hover:text-[#C8782A] underline underline-offset-2">Terms of Service</a>
+            <a href="/terms" className="hover:text-[#C8782A] underline underline-offset-2">Terms of Service</a>
             {' '}and{' '}
-            <a href="#" className="hover:text-[#C8782A] underline underline-offset-2">Privacy Policy</a>.
+            <a href="/privacy" className="hover:text-[#C8782A] underline underline-offset-2">Privacy Policy</a>.
           </p>
         </motion.div>
       </section>

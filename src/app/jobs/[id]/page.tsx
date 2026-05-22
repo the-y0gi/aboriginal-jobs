@@ -1,25 +1,43 @@
 "use client";
 
-import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
-import Link from 'next/link';
-import { motion, AnimatePresence } from 'motion/react';
-import { useQuery } from '@tanstack/react-query';
-import { Spinner } from '@/components/Spinner';
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+import Link from "next/link";
+import { motion, AnimatePresence } from "motion/react";
+import { useQuery } from "@tanstack/react-query";
 import {
-  MapPin, Clock, DollarSign, Building2, Globe,
-  Mail, ChevronRight, Wifi, Leaf, Calendar,
-  CheckCircle, ArrowLeft, Share2, X,
-  AlertCircle, Code2, Briefcase, Phone, MessageCircle,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { formatDate } from 'date-fns';
+  MapPin,
+  Clock,
+  DollarSign,
+  Building2,
+  Globe,
+  Mail,
+  ChevronRight,
+  Wifi,
+  Leaf,
+  Calendar,
+  CheckCircle,
+  ArrowLeft,
+  Share2,
+  X,
+  AlertCircle,
+  Code2,
+  Briefcase,
+  Phone,
+  MessageCircle,
+  Linkedin,
+  Twitter,
+  Copy,
+  Check,
+  Hash,
+  User,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 /* ── Types ──────────────────────────────────────────────────────────── */
 
-
 interface ApplyMethod {
-  method: 'email' | 'phone' | 'mail' | 'inPerson' | string;
+  method: "email" | "phone" | "mail" | "inPerson" | string;
   email?: string;
   phone?: string;
   mailAddress?: string;
@@ -32,11 +50,13 @@ interface JobDetail {
   id?: string;
   title: string;
   company: string;
+  contactName?: string;
+  jobId?: string;
   city: string;
   province: string;
   location: string;
   salary: string;
-  salaryType?: 'hour' | 'week' | 'month' | 'year';
+  salaryType?: "hour" | "week" | "month" | "year";
   employmentType: string;
   category: string;
   nocCode: string;
@@ -71,39 +91,47 @@ function ApplyModal({
   onClose,
   jobTitle,
   company,
-  applyMethods
+  applyMethods,
 }: ApplyModalProps) {
-
-    //Background Scroll Prevention
+  //Background Scroll Prevention
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     }
     return () => {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     };
   }, [isOpen]);
-  
 
   const getMethodIcon = (method: string) => {
     switch (method) {
-      case 'email': return <Mail size={20} className="text-[#C8782A]" />;
-      case 'phone': return <Phone size={20} className="text-[#C8782A]" />;
-      case 'mail': return <MapPin size={20} className="text-[#C8782A]" />;
-      case 'inPerson': return <Building2 size={20} className="text-[#C8782A]" />;
-      default: return <MessageCircle size={20} className="text-[#C8782A]" />;
+      case "email":
+        return <Mail size={20} className="text-[#C8782A]" />;
+      case "phone":
+        return <Phone size={20} className="text-[#C8782A]" />;
+      case "mail":
+        return <MapPin size={20} className="text-[#C8782A]" />;
+      case "inPerson":
+        return <Building2 size={20} className="text-[#C8782A]" />;
+      default:
+        return <MessageCircle size={20} className="text-[#C8782A]" />;
     }
   };
 
   const getMethodTitle = (method: string) => {
     switch (method) {
-      case 'email': return 'Apply by Email';
-      case 'phone': return 'Apply by Phone';
-      case 'mail': return 'Apply by Mail';
-      case 'inPerson': return 'Apply in Person';
-      default: return 'Apply Now';
+      case "email":
+        return "Apply by Email";
+      case "phone":
+        return "Apply by Phone";
+      case "mail":
+        return "Apply by Mail";
+      case "inPerson":
+        return "Apply in Person";
+      default:
+        return "Apply Now";
     }
   };
 
@@ -132,10 +160,16 @@ function ApplyModal({
               {/* Header */}
               <div className="bg-gradient-to-r from-[#C8782A] to-[#B06820] px-6 py-5 flex justify-between items-center">
                 <div>
-                  <h3 className="text-white font-bold text-xl tracking-wide" style={{ fontFamily: "'Playfair Display', serif" }}>
+                  <h3
+                    className="text-white font-bold text-xl tracking-wide"
+                    style={{ fontFamily: "'Playfair Display', serif" }}
+                  >
                     How to Apply
                   </h3>
-                  <p className="text-white/80 text-sm mt-1">{jobTitle} • <span className="font-medium text-white">{company}</span></p>
+                  <p className="text-white/80 text-sm mt-1">
+                    {jobTitle} •{" "}
+                    <span className="font-medium text-white">{company}</span>
+                  </p>
                 </div>
                 <button
                   onClick={onClose}
@@ -150,9 +184,16 @@ function ApplyModal({
               <div className="p-6 max-h-[70vh] overflow-y-auto">
                 {applyMethods.length === 0 ? (
                   <div className="text-center py-10 px-4">
-                    <AlertCircle size={44} className="text-[#C8782A]/50 mx-auto mb-3" />
-                    <p className="text-[#1C1C1C] font-medium text-base">No application methods specified</p>
-                    <p className="text-sm text-[#6B3A2A]/60 mt-1">Please check back later or contact the employer directly.</p>
+                    <AlertCircle
+                      size={44}
+                      className="text-[#C8782A]/50 mx-auto mb-3"
+                    />
+                    <p className="text-[#1C1C1C] font-medium text-base">
+                      No application methods specified
+                    </p>
+                    <p className="text-sm text-[#6B3A2A]/60 mt-1">
+                      Please check back later or contact the employer directly.
+                    </p>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -162,29 +203,29 @@ function ApplyModal({
 
                     <div className="space-y-3">
                       {applyMethods.map((method, idx) => {
-                        const isEmail = method.method === 'email';
-                        const isPhone = method.method === 'phone';
-                        const isMail = method.method === 'mail';
-                        const isInPerson = method.method === 'inPerson';
+                        const isEmail = method.method === "email";
+                        const isPhone = method.method === "phone";
+                        const isMail = method.method === "mail";
+                        const isInPerson = method.method === "inPerson";
 
-                        let displayValue = '';
-                        let actionLink = '';
-                        let subtitle = '';
+                        let displayValue = "";
+                        let actionLink = "";
+                        let subtitle = "";
 
                         if (isEmail && method.email) {
                           displayValue = method.email;
                           actionLink = `mailto:${method.email}`;
-                          subtitle = 'Send your resume and cover letter';
+                          subtitle = "Send your resume and cover letter";
                         } else if (isPhone && method.phone) {
                           displayValue = method.phone;
                           actionLink = `tel:${method.phone}`;
-                          subtitle = 'Call during business hours';
+                          subtitle = "Call during business hours";
                         } else if (isMail && method.mailAddress) {
                           displayValue = method.mailAddress;
-                          subtitle = 'Send your application by mail';
+                          subtitle = "Send your application by mail";
                         } else if (isInPerson && method.inPersonAddress) {
                           displayValue = method.inPersonAddress;
-                          subtitle = 'Drop off your application in person';
+                          subtitle = "Drop off your application in person";
                         }
 
                         return (
@@ -201,7 +242,9 @@ function ApplyModal({
                                   {getMethodTitle(method.method)}
                                 </h4>
                                 {subtitle && (
-                                  <p className="text-xs text-[#6B3A2A]/60 mt-0.5 mb-2 font-medium">{subtitle}</p>
+                                  <p className="text-xs text-[#6B3A2A]/60 mt-0.5 mb-2 font-medium">
+                                    {subtitle}
+                                  </p>
                                 )}
 
                                 {actionLink ? (
@@ -210,16 +253,26 @@ function ApplyModal({
                                     className="text-sm text-[#1a64c4] hover:text-[#114b94] font-medium break-all inline-flex items-center gap-1 hover:underline"
                                   >
                                     {displayValue}
-                                    <ChevronRight size={14} className="group-hover:translate-x-0.5 transition-transform duration-200" />
+                                    <ChevronRight
+                                      size={14}
+                                      className="group-hover:translate-x-0.5 transition-transform duration-200"
+                                    />
                                   </a>
                                 ) : (
-                                  <p className="text-sm text-[#1C1C1C] font-medium break-words leading-relaxed">{displayValue}</p>
+                                  <p className="text-sm text-[#1C1C1C] font-medium break-words leading-relaxed">
+                                    {displayValue}
+                                  </p>
                                 )}
 
                                 {isInPerson && method.inPersonTiming && (
                                   <div className="mt-3 flex items-center gap-2 text-xs font-medium text-[#C8782A] bg-[#FAF5EE] border border-[#C8782A]/10 rounded-lg px-3 py-2 w-max max-w-full">
-                                    <Clock size={13} className="flex-shrink-0" />
-                                    <span className="truncate">{method.inPersonTiming}</span>
+                                    <Clock
+                                      size={13}
+                                      className="flex-shrink-0"
+                                    />
+                                    <span className="truncate">
+                                      {method.inPersonTiming}
+                                    </span>
                                   </div>
                                 )}
                               </div>
@@ -232,9 +285,16 @@ function ApplyModal({
                     {/* Notice Banner */}
                     <div className="mt-5 p-4 bg-[#7A9E7E]/10 rounded-xl border border-[#7A9E7E]/20">
                       <div className="flex items-start gap-2.5 text-xs text-[#2A442E]">
-                        <CheckCircle size={16} className="text-[#558259] flex-shrink-0 mt-0.5" />
+                        <CheckCircle
+                          size={16}
+                          className="text-[#558259] flex-shrink-0 mt-0.5"
+                        />
                         <p className="leading-normal">
-                          Please mention <strong className="text-[#1C1C1C] font-bold">&quot;{jobTitle} - Aboriginal Jobs Canada&quot;</strong> in your application.
+                          Please mention{" "}
+                          <strong className="text-[#1C1C1C] font-bold">
+                            &quot;{jobTitle} - Aboriginal Jobs Canada&quot;
+                          </strong>{" "}
+                          in your application.
                         </p>
                       </div>
                     </div>
@@ -243,7 +303,7 @@ function ApplyModal({
 
                 <button
                   onClick={onClose}
-                  className="w-full mt-5 py-3 px-4 border border-[#C8782A]/30 text-[#6B3A2A] font-semibold rounded-xl hover:bg-[#C8782A]/5 transition-colors duration-200 active:bg-[#C8782A]/10 text-center text-sm cursor-pointer"
+                  className="w-full mt-5 py-3 px-4 border border-[#C8782A]/30 text-[#6B3A2A] font-semibold rounded-xl hover:bg-[#C8782A]/5 hover:text-black transition-colors duration-200 active:bg-[#C8782A]/10 text-center text-sm cursor-pointer"
                 >
                   Close
                 </button>
@@ -256,63 +316,176 @@ function ApplyModal({
   );
 }
 
-
 /* ── Helper functions ───────────────────────────────────────────────── */
 function formatSalary(salary: string, salaryType?: string): string {
-  if (!salary) return 'Salary not specified';
+  if (!salary) return "Salary not specified";
   const typeMap: Record<string, string> = {
-    hour: '/hour',
-    week: '/week',
-    month: '/month',
-    year: '/year',
+    hour: "/hour",
+    week: "/week",
+    month: "/month",
+    year: "/year",
   };
-  const suffix = salaryType && typeMap[salaryType] ? typeMap[salaryType] : '';
+  const suffix = salaryType && typeMap[salaryType] ? typeMap[salaryType] : "";
   return `$${salary} CAD${suffix}`;
 }
 
 function getStartDateLabel(startDate: string): string {
   const dateMap: Record<string, string> = {
-    asap: 'As Soon As Possible',
-    immediate: 'Immediate Joining',
-    '1week': 'Within 1 Week',
-    '2weeks': 'Within 2 Weeks',
-    '1month': 'Within 1 Month',
+    asap: "As Soon As Possible",
+    immediate: "Immediate Joining",
+    "1week": "Within 1 Week",
+    "2weeks": "Within 2 Weeks",
+    "1month": "Within 1 Month",
   };
   return dateMap[startDate] || startDate;
-}
-
-function postedLabel(date: string | Date): string {
-  if (!date) return 'Recently';
-
-  const postedDate = new Date(date);
-  const now = new Date();
-  const diffTime = Math.abs(now.getTime() - postedDate.getTime());
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-  if (diffDays === 0) return 'Today';
-  if (diffDays === 1) return 'Yesterday';
-  if (diffDays < 7) return `${diffDays} days ago`;
-  if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
-  return `${Math.floor(diffDays / 30)} months ago`;
 }
 
 function getLocation(job: JobDetail): string {
   const parts = [];
   if (job.city && job.city !== job.province) parts.push(job.city);
   if (job.province) parts.push(job.province);
-  return parts.join(', ') || job.location || 'Location not specified';
+  return parts.join(", ") || job.location || "Location not specified";
 }
 
 function formatClosingDate(expiresAt?: string | Date): string {
-  if (!expiresAt) return 'Not specified';
+  if (!expiresAt) return "Not specified";
   const date = new Date(expiresAt);
-  return date.toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric' });
+  return date.toLocaleDateString("en-CA", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
+
+/* ── Share Modal Component ──────────────────────────────────────────── */
+function ShareModal({
+  isOpen,
+  onClose,
+  url,
+  title,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  url: string;
+  title: string;
+}) {
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [isOpen]);
+
+  const shareOptions = [
+    {
+      name: "WhatsApp",
+      icon: <MessageCircle size={20} />,
+      color: "bg-[#25D366] hover:bg-[#20BD5A]",
+      href: `https://wa.me/?text=${encodeURIComponent(`${title} - ${url}`)}`,
+    },
+    {
+      name: "LinkedIn",
+      icon: <Linkedin size={20} />,
+      color: "bg-[#0077B5] hover:bg-[#006399]",
+      href: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`,
+    },
+    {
+      name: "Twitter",
+      icon: <Twitter size={20} />,
+      color: "bg-[#1DA1F2] hover:bg-[#1A91DA]",
+      href: `https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`,
+    },
+  ];
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
+          />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ ease: "easeOut", duration: 0.2 }}
+              className="relative bg-white rounded-2xl shadow-2xl overflow-hidden max-w-sm w-full pointer-events-auto"
+            >
+              <div className="bg-gradient-to-r from-[#C8782A] to-[#B06820] px-5 py-4 flex justify-between items-center">
+                <h3
+                  className="text-white font-bold text-lg"
+                  style={{ fontFamily: "'Playfair Display', serif" }}
+                >
+                  Share this job
+                </h3>
+                <button
+                  onClick={onClose}
+                  className="text-white/80 hover:text-white bg-white/10 hover:bg-white/20 p-1.5 rounded-full transition-all"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+              <div className="p-5">
+                <div className="grid grid-cols-3 gap-3 mb-5">
+                  {shareOptions.map((option) => (
+                    <a
+                      key={option.name}
+                      href={option.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={onClose}
+                      className={`${option.color} text-white rounded-xl p-3 flex flex-col items-center gap-1.5 transition-all hover:scale-105`}
+                    >
+                      {option.icon}
+                      <span className="text-[10px] font-semibold">
+                        {option.name}
+                      </span>
+                    </a>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <div className="flex-1 bg-[#FAF5EE] rounded-xl px-3 py-2 text-xs text-[#6B3A2A]/70 truncate border border-[#C8782A]/10">
+                    {url}
+                  </div>
+                  <button
+                    onClick={handleCopyLink}
+                    className="bg-[#C8782A] hover:bg-[#B06820] text-white rounded-xl px-4 flex items-center gap-1.5 transition-all text-sm font-medium"
+                  >
+                    {copied ? <Check size={16} /> : <Copy size={16} />}
+                    {copied ? "Copied" : "Copy"}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </>
+      )}
+    </AnimatePresence>
+  );
 }
 
 /* ── Related job card ───────────────────────────────────────────────── */
 function RelatedCard({ job }: { job: JobDetail }) {
   return (
-    <Link href={`/jobs/${job._id || job.id}`}
+    <Link
+      href={`/jobs/${job._id || job.id}`}
       className="group flex gap-3 p-3 sm:p-4 rounded-xl border border-[#C8782A]/10 hover:border-[#C8782A]/30 hover:bg-[#FAF5EE]/50 transition-all duration-200"
     >
       <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-[#FAF5EE] border border-[#C8782A]/10 flex items-center justify-center flex-shrink-0">
@@ -322,10 +495,17 @@ function RelatedCard({ job }: { job: JobDetail }) {
         <p className="font-semibold text-xs sm:text-sm text-[#1C1C1C] group-hover:text-[#C8782A] transition-colors leading-snug line-clamp-2">
           {job.title}
         </p>
-        <p className="text-xs text-[#C8782A] font-medium truncate">{job.company}</p>
-        <p className="text-xs text-[#6B3A2A]/50 mt-0.5 truncate">{getLocation(job)}</p>
+        <p className="text-xs text-[#C8782A] font-medium truncate">
+          {job.company}
+        </p>
+        <p className="text-xs text-[#6B3A2A]/50 mt-0.5 truncate">
+          {getLocation(job)}
+        </p>
       </div>
-      <ChevronRight size={14} className="text-[#C8782A]/40 flex-shrink-0 self-center ml-auto group-hover:translate-x-0.5 transition-transform" />
+      <ChevronRight
+        size={14}
+        className="text-[#C8782A]/40 flex-shrink-0 self-center ml-auto group-hover:translate-x-0.5 transition-transform"
+      />
     </Link>
   );
 }
@@ -334,16 +514,17 @@ function RelatedCard({ job }: { job: JobDetail }) {
 export default function JobDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const { data: dbJobResponse, isLoading } = useQuery({
-    queryKey: ['job', id],
+    queryKey: ["job", id],
     queryFn: async () => {
       if (!id) return null;
       const res = await fetch(`/api/jobs/${id}`);
       if (!res.ok) {
         if (res.status === 404) return { success: false, data: null };
-        throw new Error('Failed to fetch job details');
+        throw new Error("Failed to fetch job details");
       }
       return res.json() as Promise<{ success: boolean; data: JobDetail }>;
     },
@@ -352,32 +533,61 @@ export default function JobDetailPage() {
 
   const job = dbJobResponse?.data;
 
-  const handleShare = () => {
-    navigator.clipboard.writeText(window.location.href).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
-  };
-
   // Fetch related jobs
   const { data: relatedJobsResponse } = useQuery({
-    queryKey: ['related-jobs', job?.category, job?._id],
+    queryKey: ["related-jobs", job?.category, job?._id],
     queryFn: async () => {
       if (!job?.category) return { data: [] };
-      const res = await fetch(`/api/jobs?category=${encodeURIComponent(job.category)}&limit=4`);
+      const res = await fetch(
+        `/api/jobs?category=${encodeURIComponent(job.category)}&limit=4`,
+      );
       if (!res.ok) return { data: [] };
       return res.json() as Promise<{ success: boolean; data: JobDetail[] }>;
     },
     enabled: !!job?.category,
   });
 
-  const related = relatedJobsResponse?.data?.filter((rj) => rj._id !== job?._id).slice(0, 4) || [];
+  const related =
+    relatedJobsResponse?.data
+      ?.filter((rj) => rj._id !== job?._id)
+      .slice(0, 4) || [];
 
+  // Skeleton Loader
   if (isLoading) {
     return (
-      <div className="min-h-[60vh] flex flex-col items-center justify-center py-20 bg-[#FAF5EE]">
-        <Spinner className="text-[#C8782A] mb-3" />
-        <p className="text-sm text-[#6B3A2A]/60 font-medium">Loading job details...</p>
+      <div className="min-h-[80vh] bg-[#FAF5EE]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 lg:py-14">
+          <div className="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-6 lg:p-10 border border-[#C8782A]/10 animate-pulse">
+            <div className="h-6 w-24 bg-[#FAF5EE] rounded mb-6" />
+            <div className="flex flex-wrap gap-2 mb-4">
+              <div className="h-6 w-16 bg-[#FAF5EE] rounded-full" />
+              <div className="h-6 w-24 bg-[#FAF5EE] rounded-full" />
+              <div className="h-6 w-20 bg-[#FAF5EE] rounded-full" />
+            </div>
+            <div className="h-8 sm:h-10 lg:h-40 w-3/4 bg-[#FAF5EE] rounded mb-2" />
+            <div className="h-5 sm:h-6 w-32 bg-[#FAF5EE] rounded mb-5" />
+            <div className="flex flex-wrap gap-2 sm:gap-3">
+              <div className="h-7 sm:h-8 w-28 bg-[#FAF5EE] rounded-full" />
+              <div className="h-7 sm:h-8 w-24 bg-[#FAF5EE] rounded-full" />
+              <div className="h-7 sm:h-8 w-32 bg-[#FAF5EE] rounded-full" />
+            </div>
+          </div>
+        </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+          <div className="flex flex-col lg:flex-row gap-8 lg:gap-10">
+            <div className="flex-1">
+              <div className="h-7 w-40 bg-[#FAF5EE] rounded mb-4" />
+              <div className="space-y-3">
+                <div className="h-4 w-full bg-[#FAF5EE] rounded" />
+                <div className="h-4 w-full bg-[#FAF5EE] rounded" />
+                <div className="h-4 w-3/4 bg-[#FAF5EE] rounded" />
+              </div>
+            </div>
+            <div className="lg:w-[320px]">
+              <div className="h-64 bg-[#FAF5EE] rounded-2xl" />
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -389,11 +599,15 @@ export default function JobDetailPage() {
           <div className="w-16 h-16 rounded-full bg-[#C8782A]/10 flex items-center justify-center mx-auto mb-5">
             <AlertCircle size={28} className="text-[#C8782A]" />
           </div>
-          <h1 className="text-3xl font-bold text-[#1C1C1C] mb-3" style={{ fontFamily: "'Playfair Display', serif" }}>
+          <h1
+            className="text-3xl font-bold text-[#1C1C1C] mb-3"
+            style={{ fontFamily: "'Playfair Display', serif" }}
+          >
             Job Not Found
           </h1>
           <p className="text-[#6B3A2A]/65 mb-7">
-            This listing may have expired or been removed. Browse our current openings below.
+            This listing may have expired or been removed. Browse our current
+            openings below.
           </p>
           <Link href="/jobs">
             <Button className="bg-[#C8782A] hover:bg-[#B06820] text-white font-semibold px-8">
@@ -406,6 +620,7 @@ export default function JobDetailPage() {
   }
 
   const applyMethods = job.applyMethods || [];
+  const currentUrl = typeof window !== "undefined" ? window.location.href : "";
 
   return (
     <>
@@ -418,15 +633,32 @@ export default function JobDetailPage() {
         applyMethods={applyMethods}
       />
 
+      {/* Share Modal */}
+      <ShareModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        url={currentUrl}
+        title={job.title}
+      />
+
       {/* Breadcrumb */}
       <div className="bg-[#FAF5EE] border-b border-[#C8782A]/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
           <nav className="flex items-center gap-1.5 text-xs text-[#6B3A2A]/55 overflow-x-auto whitespace-nowrap">
-            <Link href="/" className="hover:text-[#C8782A] transition-colors">Home</Link>
+            <Link href="/" className="hover:text-[#C8782A] transition-colors">
+              Home
+            </Link>
             <ChevronRight size={12} />
-            <Link href="/jobs" className="hover:text-[#C8782A] transition-colors">Jobs</Link>
+            <Link
+              href="/jobs"
+              className="hover:text-[#C8782A] transition-colors"
+            >
+              Jobs
+            </Link>
             <ChevronRight size={12} />
-            <span className="text-[#C8782A] font-medium truncate max-w-[150px] sm:max-w-[200px]">{job.title}</span>
+            <span className="text-[#C8782A] font-medium truncate max-w-[150px] sm:max-w-[200px]">
+              {job.title}
+            </span>
           </nav>
         </div>
       </div>
@@ -442,7 +674,8 @@ export default function JobDetailPage() {
           >
             {/* Back button */}
             <div className="mb-4 sm:mb-6">
-              <Link href="/jobs"
+              <Link
+                href="/jobs"
                 className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#C8782A] hover:underline"
               >
                 <ArrowLeft size={14} /> Back to Jobs
@@ -472,10 +705,19 @@ export default function JobDetailPage() {
                       NOC: {job.nocCode}
                     </span>
                   )}
+                  {/* Job ID Badge */}
+                  {job.jobId && (
+                    <span className="inline-flex items-center gap-1.5 text-xs bg-neutral-100 text-neutral-600 border border-neutral-200 px-2.5 py-1 rounded-full font-mono">
+                      <Hash size={11} /> {job.jobId}
+                    </span>
+                  )}
                 </div>
 
                 {/* Title */}
-                <h1 className="text-2xl sm:text-3xl lg:text-5xl font-bold text-[#1C1C1C] leading-tight mb-2 break-words" style={{ fontFamily: "'Playfair Display', serif" }}>
+                <h1
+                  className="text-2xl sm:text-3xl lg:text-5xl font-bold text-[#1C1C1C] leading-tight mb-2 break-words"
+                  style={{ fontFamily: "'Playfair Display', serif" }}
+                >
                   {job.title}
                 </h1>
 
@@ -488,7 +730,9 @@ export default function JobDetailPage() {
                 <div className="flex flex-wrap gap-2 sm:gap-3">
                   <span className="inline-flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-[#6B3A2A]/70 bg-white border border-[#C8782A]/12 rounded-full px-3 sm:px-4 py-1 sm:py-1.5">
                     <MapPin size={12} className="text-[#C8782A]" />
-                    <span className="truncate max-w-[150px] sm:max-w-none">{getLocation(job)}</span>
+                    <span className="truncate max-w-[150px] sm:max-w-none">
+                      {getLocation(job)}
+                    </span>
                   </span>
                   <span className="inline-flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-[#6B3A2A]/70 bg-white border border-[#C8782A]/12 rounded-full px-3 sm:px-4 py-1 sm:py-1.5">
                     <Clock size={12} className="text-[#C8782A]" />
@@ -501,7 +745,8 @@ export default function JobDetailPage() {
                   {job.experience && (
                     <span className="inline-flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-[#6B3A2A]/70 bg-white border border-[#C8782A]/12 rounded-full px-3 sm:px-4 py-1 sm:py-1.5">
                       <Briefcase size={12} className="text-[#C8782A]" />
-                      {job.experience} {parseInt(job.experience) > 1 ? 'years' : 'year'}
+                      {job.experience}{" "}
+                      {parseInt(job.experience) > 1 ? "years" : "year"}
                     </span>
                   )}
                   {job.startDate && (
@@ -523,23 +768,22 @@ export default function JobDetailPage() {
                 </Button>
                 <Button
                   variant="outline"
-                  onClick={handleShare}
-                  className="w-full border-[#C8782A]/25 text-[#6B3A2A] hover:bg-[#C8782A]/5"
+                  onClick={() => setIsShareModalOpen(true)}
+                  className="w-full border-[#C8782A]/25 text-[#6B3A2A] hover:bg-[#C8782A]/5 hover:text-black"
                 >
                   <Share2 size={14} className="mr-1" />
-                  {copied ? 'Copied!' : 'Share'}
+                  Share
                 </Button>
-                {/* <p className="text-xs text-[#6B3A2A]/45 text-center">
-                  Posted {postedLabel(job.postDate || job.postedAt)}
-                </p> */}
-               <p className="text-xs text-[#6B3A2A]/45 text-center">
-  Posted on{" "}
-  {new Date(job.postDate).toLocaleDateString("en-US", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  })}
-</p>
+                <p className="text-xs text-[#6B3A2A]/45 text-center">
+                  Posted on{" "}
+                  {job.postDate
+                    ? new Date(job.postDate).toLocaleDateString("en-US", {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                      })
+                    : "Recently"}
+                </p>
               </div>
             </div>
           </motion.div>
@@ -555,7 +799,10 @@ export default function JobDetailPage() {
               {/* About the Role */}
               {job.descriptionHtml && (
                 <div className="mb-8">
-                  <h2 className="text-xl sm:text-2xl font-bold text-[#1C1C1C] mb-4" style={{ fontFamily: "'Playfair Display', serif" }}>
+                  <h2
+                    className="text-xl sm:text-2xl font-bold text-[#1C1C1C] mb-4"
+                    style={{ fontFamily: "'Playfair Display', serif" }}
+                  >
                     About the Role
                   </h2>
                   <div
@@ -573,7 +820,10 @@ export default function JobDetailPage() {
               {/* Qualifications & Requirements */}
               {job.requirementsHtml && (
                 <div className="mb-8">
-                  <h2 className="text-xl sm:text-2xl font-bold text-[#1C1C1C] mb-4" style={{ fontFamily: "'Playfair Display', serif" }}>
+                  <h2
+                    className="text-xl sm:text-2xl font-bold text-[#1C1C1C] mb-4"
+                    style={{ fontFamily: "'Playfair Display', serif" }}
+                  >
                     Qualifications & Requirements
                   </h2>
                   <div
@@ -589,45 +839,77 @@ export default function JobDetailPage() {
               )}
 
               {/* Additional Details Card */}
-              {(job.nocCode || job.runDays || job.experience || job.startDate) && (
+              {(job.nocCode ||
+                job.runDays ||
+                job.experience ||
+                job.startDate) && (
                 <div className="bg-[#FAF5EE] rounded-2xl p-5 sm:p-6 border border-[#C8782A]/10 mb-8">
-                  <h3 className="font-bold text-[#1C1C1C] mb-4 text-lg" style={{ fontFamily: "'Playfair Display', serif" }}>
+                  <h3
+                    className="font-bold text-[#1C1C1C] mb-4 text-lg"
+                    style={{ fontFamily: "'Playfair Display', serif" }}
+                  >
                     Additional Details
                   </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {job.nocCode && (
                       <div className="flex items-start gap-2.5">
-                        <Code2 size={14} className="text-[#C8782A] flex-shrink-0 mt-0.5" />
+                        <Code2
+                          size={14}
+                          className="text-[#C8782A] flex-shrink-0 mt-0.5"
+                        />
                         <div>
                           <p className="text-xs text-[#6B3A2A]/50">NOC Code</p>
-                          <p className="text-sm font-semibold text-[#1C1C1C] break-words">{job.nocCode}</p>
+                          <p className="text-sm font-semibold text-[#1C1C1C] break-words">
+                            {job.nocCode}
+                          </p>
                         </div>
                       </div>
                     )}
                     {job.runDays && (
                       <div className="flex items-start gap-2.5">
-                        <Calendar size={14} className="text-[#C8782A] flex-shrink-0 mt-0.5" />
+                        <Calendar
+                          size={14}
+                          className="text-[#C8782A] flex-shrink-0 mt-0.5"
+                        />
                         <div>
-                          <p className="text-xs text-[#6B3A2A]/50">Posted for</p>
-                          <p className="text-sm font-semibold text-[#1C1C1C]">{job.runDays} days</p>
+                          <p className="text-xs text-[#6B3A2A]/50">
+                            Posted for
+                          </p>
+                          <p className="text-sm font-semibold text-[#1C1C1C]">
+                            {job.runDays} days
+                          </p>
                         </div>
                       </div>
                     )}
                     {job.experience && (
                       <div className="flex items-start gap-2.5">
-                        <Briefcase size={14} className="text-[#C8782A] flex-shrink-0 mt-0.5" />
+                        <Briefcase
+                          size={14}
+                          className="text-[#C8782A] flex-shrink-0 mt-0.5"
+                        />
                         <div>
-                          <p className="text-xs text-[#6B3A2A]/50">Experience Required</p>
-                          <p className="text-sm font-semibold text-[#1C1C1C]">{job.experience} years</p>
+                          <p className="text-xs text-[#6B3A2A]/50">
+                            Experience Required
+                          </p>
+                          <p className="text-sm font-semibold text-[#1C1C1C]">
+                            {job.experience} years
+                          </p>
                         </div>
                       </div>
                     )}
                     {job.startDate && (
                       <div className="flex items-start gap-2.5">
-                        <Calendar size={14} className="text-[#C8782A] flex-shrink-0 mt-0.5" />
+                        <Calendar
+                          size={14}
+                          className="text-[#C8782A] flex-shrink-0 mt-0.5"
+                        />
                         <div>
-                          <p className="text-xs text-[#6B3A2A]/50">Expected Start Date</p>
-                          <p className="text-sm font-semibold text-[#1C1C1C]">{getStartDateLabel(job.startDate)}</p>
+                          <p className="text-xs text-[#6B3A2A]/50">
+                            Expected Start Date
+                          </p>
+                          <p className="text-sm font-semibold text-[#1C1C1C]">
+                            {getStartDateLabel(job.startDate)}
+                          </p>
                         </div>
                       </div>
                     )}
@@ -645,11 +927,11 @@ export default function JobDetailPage() {
                 </Button>
                 <Button
                   variant="outline"
-                  onClick={handleShare}
+                  onClick={() => setIsShareModalOpen(true)}
                   className="w-full border-[#C8782A]/25 text-[#6B3A2A]"
                 >
                   <Share2 size={15} className="mr-2" />
-                  {copied ? 'Copied!' : 'Share'}
+                  Share
                 </Button>
               </div>
             </div>
@@ -667,33 +949,48 @@ export default function JobDetailPage() {
                   </Button>
                   <div className="flex flex-col gap-2.5 text-sm">
                     <div className="flex items-center gap-2.5 text-[#6B3A2A]/65">
-                      <Clock size={14} className="text-[#C8782A] flex-shrink-0" />
-                      <span  className="text-xs text-[#6B3A2A]/45 text-center">
-  Posted on{" "}
-  {new Date(job.postDate).toLocaleDateString("en-US", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  })}
-</span>
-                      {/* <span>Posted {postedLabel(job.postDate || job.postedAt)}</span> */}
+                      <Clock
+                        size={14}
+                        className="text-[#C8782A] flex-shrink-0"
+                      />
+                      <span className="text-xs text-[#6B3A2A]/45">
+                        Posted on{" "}
+                        {job.postDate
+                          ? new Date(job.postDate).toLocaleDateString("en-US", {
+                              day: "numeric",
+                              month: "long",
+                              year: "numeric",
+                            })
+                          : "Recently"}
+                      </span>
                     </div>
                     {job.expiresAt && (
                       <div className="flex items-center gap-2.5 text-[#6B3A2A]/65">
-                        <Calendar size={14} className="text-[#C8782A] flex-shrink-0" />
-                        <span>Closes <strong className="text-[#1C1C1C]">{formatClosingDate(job.expiresAt)}</strong></span>
+                        <Calendar
+                          size={14}
+                          className="text-[#C8782A] flex-shrink-0"
+                        />
+                        <span>
+                          Closes{" "}
+                          <strong className="text-[#1C1C1C]">
+                            {formatClosingDate(job.expiresAt)}
+                          </strong>
+                        </span>
                       </div>
                     )}
                     {job.website && (
                       <div className="flex items-center gap-2.5 text-[#6B3A2A]/65">
-                        <Globe size={14} className="text-[#C8782A] flex-shrink-0" />
+                        <Globe
+                          size={14}
+                          className="text-[#C8782A] flex-shrink-0"
+                        />
                         <a
                           href={job.website}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-[#1a64c4] hover:underline truncate"
                         >
-                          {job.website.replace(/^https?:\/\//, '')}
+                          {job.website.replace(/^https?:\/\//, "")}
                         </a>
                       </div>
                     )}
@@ -702,7 +999,10 @@ export default function JobDetailPage() {
 
                 {/* About Employer Card */}
                 <div className="bg-white rounded-2xl p-5 sm:p-6 border border-[#C8782A]/10">
-                  <h3 className="font-bold text-[#1C1C1C] mb-3 text-lg" style={{ fontFamily: "'Playfair Display', serif" }}>
+                  <h3
+                    className="font-bold text-[#1C1C1C] mb-3 text-lg"
+                    style={{ fontFamily: "'Playfair Display', serif" }}
+                  >
                     About the Employer
                   </h3>
                   <div className="flex items-center gap-3 mb-3">
@@ -710,10 +1010,23 @@ export default function JobDetailPage() {
                       <Building2 size={16} className="text-[#C8782A]" />
                     </div>
                     <div className="min-w-0">
-                      <p className="font-semibold text-sm text-[#1C1C1C]">{job.company}</p>
-                      <p className="text-xs text-[#6B3A2A]/55 truncate">{getLocation(job)}</p>
+                      <p className="font-semibold text-sm text-[#1C1C1C]">
+                        {job.company}
+                      </p>
+                      <p className="text-xs text-[#6B3A2A]/55 truncate">
+                        {getLocation(job)}
+                      </p>
                     </div>
                   </div>
+                  {/* Contact Name*/}
+                  {job.contactName && (
+                    <div className="flex items-center gap-2 text-xs text-[#6B3A2A]/70 bg-[#FAF5EE] rounded-lg px-3 py-2 mb-2">
+                      <User size={12} className="text-[#C8782A]" />
+                      <span>
+                        Contact: <strong>{job.contactName}</strong>
+                      </span>
+                    </div>
+                  )}
                   {(job.indigenousOwned || job.indigenousPreference) && (
                     <div className="flex items-center gap-2 text-xs text-[#4a7a4e] bg-[#7A9E7E]/10 rounded-lg px-3 py-2 mb-2">
                       <Leaf size={12} />
@@ -731,7 +1044,10 @@ export default function JobDetailPage() {
                 {/* Related Jobs */}
                 {related.length > 0 && (
                   <div className="bg-white rounded-2xl p-5 sm:p-6 border border-[#C8782A]/10">
-                    <h3 className="font-bold text-[#1C1C1C] mb-4 text-lg" style={{ fontFamily: "'Playfair Display', serif" }}>
+                    <h3
+                      className="font-bold text-[#1C1C1C] mb-4 text-lg"
+                      style={{ fontFamily: "'Playfair Display', serif" }}
+                    >
                       Similar Jobs
                     </h3>
                     <div className="flex flex-col gap-2">
@@ -739,7 +1055,8 @@ export default function JobDetailPage() {
                         <RelatedCard key={rj._id} job={rj} />
                       ))}
                     </div>
-                    <Link href={`/jobs?category=${encodeURIComponent(job.category)}`}
+                    <Link
+                      href={`/jobs?category=${encodeURIComponent(job.category)}`}
                       className="inline-flex items-center gap-1.5 text-xs text-[#C8782A] font-semibold mt-4 hover:gap-2.5 transition-all duration-200"
                     >
                       More {job.category} jobs <ChevronRight size={12} />

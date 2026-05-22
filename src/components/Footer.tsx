@@ -2,18 +2,18 @@ import Link from "next/link";
 
 const footerLinks = {
   jobSeekers: [
-    { label: "Search Jobs", href: "/job-seekers" },
+    { label: "Search Jobs", href: "/jobs" },
     // { label: "Create Profile", href: "/register" },
     // { label: "Upload Resume", href: "/register" },
     // { label: "Job Alerts", href: "/register" },
-    { label: "Apply Online", href: "/job-seekers" },
+    // { label: "Apply Online", href: "/job-seekers" },
   ],
   employers: [
     { label: "Post a Job", href: "/post-a-job" },
     { label: "Pricing & Packages", href: "/pricing" },
-    { label: "Employer Dashboard", href: "/login" },
-    { label: "Indigenous Hiring Support", href: "/employers" },
-    { label: "Company Profile", href: "/employers" },
+    { label: "Employer Dashboard", href: "/employers/dashboard" },
+    // { label: "Indigenous Hiring Support", href: "/employers" },
+    // { label: "Company Profile", href: "/employers" },
   ],
   company: [
     { label: "About Aboriginal Jobs Canada", href: "/about" },
@@ -127,10 +127,10 @@ export default function Footer() {
                 Contact
               </h4>
               <a
-                href="mailto:info@aboriginaljobscanada.ca"
+                href="mailto:info.aboriginal@cyber-nest.ca"
                 className="text-[#FAF5EE]/65 hover:text-[#C8782A] text-sm transition-colors duration-200 block mb-1"
               >
-                info@aboriginaljobscanada.ca
+                info.aboriginal@cyber-nest.ca
               </a>
               <p className="text-[#FAF5EE]/65 text-sm">Canada-Wide</p>
             </div>

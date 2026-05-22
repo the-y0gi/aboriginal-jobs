@@ -27,7 +27,7 @@ const features = [
   { icon: Users, title: 'Manage Applicants', desc: 'Review, organize, and communicate with applicants through your dedicated employer dashboard.' },
   { icon: Star, title: 'Featured Listings', desc: 'Boost your visibility with featured placements that appear at the top of search results.' },
   { icon: Building2, title: 'Company Profile', desc: 'Showcase your organization\'s commitment to Indigenous hiring with a dedicated company profile page.' },
-  { icon: HeartHandshake, title: 'Indigenous Hiring Support', desc: 'Access resources, guidance, and best practices for respectful and effective Indigenous recruitment.' },
+  { icon: HeartHandshake, title: 'Hiring Support', desc: 'Access resources, guidance, and best practices for respectful and effective Indigenous recruitment.' },
   { icon: BarChart3, title: 'Performance Insights', desc: 'Track your listing views, applications received, and hiring outcomes with clear reporting tools.' },
 ];
 

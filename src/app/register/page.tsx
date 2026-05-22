@@ -1,19 +1,32 @@
 "use client";
 
-import { useState, useEffect, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
-import Link from 'next/link';
-import { motion, AnimatePresence } from 'motion/react';
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { motion, AnimatePresence } from "motion/react";
 import {
-  Building2, Eye, EyeOff, CheckCircle,
-  AlertCircle, ChevronRight, ArrowLeft, Sparkles, Lock, RefreshCw
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { InputOTP, InputOTPGroup, InputOTPSlot, InputOTPSeparator } from "@/components/ui/input-otp";
-import toast from 'react-hot-toast';
-import { signIn } from '@/lib/auth/auth-client';
+  Building2,
+  Eye,
+  EyeOff,
+  CheckCircle,
+  AlertCircle,
+  ChevronRight,
+  ArrowLeft,
+  Sparkles,
+  Lock,
+  RefreshCw,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+  InputOTPSeparator,
+} from "@/components/ui/input-otp";
+import toast from "react-hot-toast";
+import { signIn } from "@/lib/auth/auth-client";
 
 /* ── Types ──────────────────────────────────────────────────────────── */
 interface FormData {
@@ -31,13 +44,22 @@ type StepErrors = Partial<Record<keyof FormData, string>>;
 
 /* ── Constants ──────────────────────────────────────────────────────── */
 const PROVINCES = [
-  'Alberta', 'British Columbia', 'Manitoba', 'New Brunswick',
-  'Newfoundland & Labrador', 'Northwest Territories', 'Nova Scotia',
-  'Nunavut', 'Ontario', 'Prince Edward Island', 'Québec',
-  'Saskatchewan', 'Yukon',
+  "Alberta",
+  "British Columbia",
+  "Manitoba",
+  "New Brunswick",
+  "Newfoundland & Labrador",
+  "Northwest Territories",
+  "Nova Scotia",
+  "Nunavut",
+  "Ontario",
+  "Prince Edward Island",
+  "Québec",
+  "Saskatchewan",
+  "Yukon",
 ];
 
-const STEP_LABELS = ['Your Details', 'Create Account', 'Verify Email'];
+const STEP_LABELS = ["Your Details", "Create Account", "Verify Email"];
 
 /* ── Helpers ────────────────────────────────────────────────────────── */
 function FieldError({ msg }: { msg?: string }) {
@@ -57,8 +79,12 @@ function LogoMark() {
         className="flex flex-col leading-tight"
         style={{ fontFamily: "'Playfair Display', serif" }}
       >
-        <span className="font-bold text-2xl tracking-tight text-[#6B3A2A] group-hover:text-[#C8782A] transition-colors duration-200 leading-none">Aboriginal Jobs</span>
-        <span className="text-[10px] font-semibold tracking-[0.25em] text-[#C8782A] uppercase mt-0.5">Canada</span>
+        <span className="font-bold text-2xl tracking-tight text-[#6B3A2A] group-hover:text-[#C8782A] transition-colors duration-200 leading-none">
+          Aboriginal Jobs
+        </span>
+        <span className="text-[10px] font-semibold tracking-[0.25em] text-[#C8782A] uppercase mt-0.5">
+          Canada
+        </span>
       </span>
     </Link>
   );
@@ -75,19 +101,21 @@ function StepIndicator({ current, total }: { current: number; total: number }) {
         return (
           <div key={step} className="flex items-center gap-2">
             <div
-              className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${done
-                ? 'bg-[#7A9E7E] text-white'
-                : active
-                  ? 'bg-[#C8782A] text-white shadow-md'
-                  : 'bg-[#C8782A]/10 text-[#6B3A2A]/40'
-                }`}
+              className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
+                done
+                  ? "bg-[#7A9E7E] text-white"
+                  : active
+                    ? "bg-[#C8782A] text-white shadow-md"
+                    : "bg-[#C8782A]/10 text-[#6B3A2A]/40"
+              }`}
             >
               {done ? <CheckCircle size={14} /> : step}
             </div>
             {i < total - 1 && (
               <div
-                className={`w-8 h-0.5 rounded-full transition-all duration-300 ${done ? 'bg-[#7A9E7E]' : 'bg-[#C8782A]/15'
-                  }`}
+                className={`w-8 h-0.5 rounded-full transition-all duration-300 ${
+                  done ? "bg-[#7A9E7E]" : "bg-[#C8782A]/15"
+                }`}
               />
             )}
           </div>
@@ -106,37 +134,40 @@ const slideVariants = {
   center: {
     x: 0,
     opacity: 1,
-    transition: { duration: 0.35, ease: 'easeOut' as const },
+    transition: { duration: 0.35, ease: "easeOut" as const },
   },
   exit: (dir: number) => ({
     x: dir > 0 ? -40 : 40,
     opacity: 0,
-    transition: { duration: 0.25, ease: 'easeIn' as const },
+    transition: { duration: 0.25, ease: "easeIn" as const },
   }),
 };
 
 /* ── Validation per step ────────────────────────────────────────────── */
 function validateStep1(data: FormData): StepErrors {
   const errs: StepErrors = {};
-  if (!data.firstName.trim()) errs.firstName = 'First name is required.';
-  if (!data.lastName.trim()) errs.lastName = 'Last name is required.';
-  if (!data.orgName.trim()) errs.orgName = 'Organization name is required.';
-  if (!data.province) errs.province = 'Please select your province or territory.';
+  if (!data.firstName.trim()) errs.firstName = "First name is required.";
+  if (!data.lastName.trim()) errs.lastName = "Last name is required.";
+  if (!data.orgName.trim()) errs.orgName = "Organization name is required.";
+  if (!data.province)
+    errs.province = "Please select your province or territory.";
   return errs;
 }
 
 function validateStep2(data: FormData): StepErrors {
   const errs: StepErrors = {};
-  if (!data.email) errs.email = 'Email is required.';
+  if (!data.email) errs.email = "Email is required.";
   else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email))
-    errs.email = 'Enter a valid email address.';
-  if (!data.password) errs.password = 'Password is required.';
+    errs.email = "Enter a valid email address.";
+  if (!data.password) errs.password = "Password is required.";
   else if (data.password.length < 8)
-    errs.password = 'Password must be at least 8 characters.';
-  if (!data.confirmPassword) errs.confirmPassword = 'Please confirm your password.';
+    errs.password = "Password must be at least 8 characters.";
+  if (!data.confirmPassword)
+    errs.confirmPassword = "Please confirm your password.";
   else if (data.password !== data.confirmPassword)
-    errs.confirmPassword = 'Passwords do not match.';
-  if (!data.agreeTerms) errs.agreeTerms = 'You must agree to the terms to continue.';
+    errs.confirmPassword = "Passwords do not match.";
+  if (!data.agreeTerms)
+    errs.agreeTerms = "You must agree to the terms to continue.";
   return errs;
 }
 
@@ -150,9 +181,21 @@ function PasswordStrength({ password }: { password: string }) {
     /[^A-Za-z0-9]/.test(password),
   ];
   const score = checks.filter(Boolean).length;
-  const labels = ['', 'Weak', 'Fair', 'Good', 'Strong'];
-  const colors = ['', 'bg-red-400', 'bg-yellow-400', 'bg-blue-400', 'bg-[#7A9E7E]'];
-  const textColors = ['', 'text-red-500', 'text-yellow-600', 'text-blue-600', 'text-[#7A9E7E]'];
+  const labels = ["", "Weak", "Fair", "Good", "Strong"];
+  const colors = [
+    "",
+    "bg-red-400",
+    "bg-yellow-400",
+    "bg-blue-400",
+    "bg-[#7A9E7E]",
+  ];
+  const textColors = [
+    "",
+    "text-red-500",
+    "text-yellow-600",
+    "text-blue-600",
+    "text-[#7A9E7E]",
+  ];
 
   return (
     <div className="mt-2">
@@ -160,12 +203,15 @@ function PasswordStrength({ password }: { password: string }) {
         {[1, 2, 3, 4].map((i) => (
           <div
             key={i}
-            className={`h-1 flex-1 rounded-full transition-all duration-300 ${i <= score ? colors[score] : 'bg-[#C8782A]/10'
-              }`}
+            className={`h-1 flex-1 rounded-full transition-all duration-300 ${
+              i <= score ? colors[score] : "bg-[#C8782A]/10"
+            }`}
           />
         ))}
       </div>
-      <p className={`text-xs font-medium ${textColors[score]}`}>{labels[score]}</p>
+      <p className={`text-xs font-medium ${textColors[score]}`}>
+        {labels[score]}
+      </p>
     </div>
   );
 }
@@ -179,40 +225,42 @@ function RegisterForm() {
   const [showConfirmPw, setShowConfirmPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const [serverError, setServerError] = useState('');
+  const [serverError, setServerError] = useState("");
 
-  const [otpVal, setOtpVal] = useState('');
+  const [otpVal, setOtpVal] = useState("");
   const [otpCountdown, setOtpCountdown] = useState(0);
-  const [otpSentMsg, setOtpSentMsg] = useState('');
-  const [devOtp, setDevOtp] = useState('');
-  const [emailForOtp, setEmailForOtp] = useState(''); // Store email for OTP resend
+  const [otpSentMsg, setOtpSentMsg] = useState("");
+  const [devOtp, setDevOtp] = useState("");
+  const [emailForOtp, setEmailForOtp] = useState(""); // Store email for OTP resend
 
   const [form, setForm] = useState<FormData>({
-    firstName: '',
-    lastName: '',
-    orgName: '',
-    province: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
+    firstName: "",
+    lastName: "",
+    orgName: "",
+    province: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
     agreeTerms: false,
   });
 
   useEffect(() => {
     if (step === 3) {
       // Push a new state to prevent back navigation
-      window.history.pushState(null, '', window.location.href);
-      
+      window.history.pushState(null, "", window.location.href);
+
       const handlePopState = (event: PopStateEvent) => {
         // When back button is pressed on step 3, push state again
-        window.history.pushState(null, '', window.location.href);
+        window.history.pushState(null, "", window.location.href);
         // Show a warning message
-        setServerError('Please complete verification or use the "Continue" button.');
-        setTimeout(() => setServerError(''), 3000);
+        setServerError(
+          'Please complete verification or use the "Continue" button.',
+        );
+        setTimeout(() => setServerError(""), 3000);
       };
-      
-      window.addEventListener('popstate', handlePopState);
-      return () => window.removeEventListener('popstate', handlePopState);
+
+      window.addEventListener("popstate", handlePopState);
+      return () => window.removeEventListener("popstate", handlePopState);
     }
   }, [step]);
 
@@ -233,30 +281,37 @@ function RegisterForm() {
   const goNext = async () => {
     if (step === 1) {
       const errs = validateStep1(form);
-      if (Object.keys(errs).length > 0) { setErrors(errs); return; }
+      if (Object.keys(errs).length > 0) {
+        setErrors(errs);
+        return;
+      }
       setDirection(1);
       setStep(2);
       return;
     }
     if (step === 2) {
       const errs = validateStep2(form);
-      if (Object.keys(errs).length > 0) { setErrors(errs); return; }
+      if (Object.keys(errs).length > 0) {
+        setErrors(errs);
+        return;
+      }
 
       setLoading(true);
-      setServerError('');
-      setOtpSentMsg('');
+      setServerError("");
+      setOtpSentMsg("");
       setEmailForOtp(form.email); // Store email for resend
-      
+
       try {
-        const res = await fetch('/api/auth/otp/send', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        const res = await fetch("/api/auth/otp/send", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email: form.email }),
         });
         const data = await res.json();
 
         if (!res.ok) {
-          const errMsg = data.error || 'Failed to send verification code. Please try again.';
+          const errMsg =
+            data.error || "Failed to send verification code. Please try again.";
           setServerError(errMsg);
           toast.error(errMsg);
           setLoading(false);
@@ -266,18 +321,20 @@ function RegisterForm() {
         if (data._devOtp) {
           setDevOtp(data._devOtp);
         } else {
-          setDevOtp('');
+          setDevOtp("");
         }
 
         setDirection(1);
         setStep(3);
-        setOtpVal('');
+        setOtpVal("");
         setOtpCountdown(60);
-        setOtpSentMsg('A 6-digit verification code has been sent to your email.');
-        toast.success('Verification code sent to your email!');
+        setOtpSentMsg(
+          "A 6-digit verification code has been sent to your email.",
+        );
+        toast.success("Verification code sent to your email!");
       } catch {
-        setServerError('Something went wrong. Please try again.');
-        toast.error('Something went wrong. Please try again.');
+        setServerError("Something went wrong. Please try again.");
+        toast.error("Something went wrong. Please try again.");
       } finally {
         setLoading(false);
       }
@@ -285,22 +342,23 @@ function RegisterForm() {
     }
     if (step === 3) {
       if (otpVal.length < 6) {
-        setServerError('Please enter the full 6-digit verification code.');
+        setServerError("Please enter the full 6-digit verification code.");
         return;
       }
       setLoading(true);
-      setServerError('');
+      setServerError("");
       try {
         // Verify the OTP
-        const verifyRes = await fetch('/api/auth/otp/verify', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        const verifyRes = await fetch("/api/auth/otp/verify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email: form.email, otp: otpVal }),
         });
         const verifyData = await verifyRes.json();
 
         if (!verifyRes.ok) {
-          const errMsg = verifyData.error || 'Incorrect or expired verification code.';
+          const errMsg =
+            verifyData.error || "Incorrect or expired verification code.";
           setServerError(errMsg);
           toast.error(errMsg);
           setLoading(false);
@@ -308,9 +366,9 @@ function RegisterForm() {
         }
 
         // Register the employer
-        const registerRes = await fetch('/api/auth/register-employer', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        const registerRes = await fetch("/api/auth/register-employer", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             firstName: form.firstName,
             lastName: form.lastName,
@@ -324,30 +382,36 @@ function RegisterForm() {
         const registerData = await registerRes.json();
 
         if (!registerRes.ok) {
-          const errMsg = registerData.error || 'Registration failed.';
+          const errMsg = registerData.error || "Registration failed.";
           setServerError(errMsg);
           toast.error(errMsg);
           setLoading(false);
           return;
         }
         // Auto login after successful registration
-const loginResult = await signIn.email({
-  email: form.email,
-  password: form.password,
-});
+        const loginResult = await signIn.email({
+          email: form.email,
+          password: form.password,
+        });
 
-if (loginResult.error) {
-  setServerError("Account created, but auto-login failed. Please sign in manually.");
-  toast.error("Please login manually.");
-  setLoading(false);
-  return;
-}
+        if (loginResult.error) {
+          setServerError(
+            "Account created, but auto-login failed. Please sign in manually.",
+          );
+          toast.error("Please login manually.");
+          setLoading(false);
+          return;
+        }
 
-toast.success('Account created successfully! Welcome aboard!');
-setSubmitted(true);
+        toast.success("Account created successfully! Welcome aboard!");
+        setSubmitted(true);
       } catch {
-        setServerError('An error occurred during account creation. Please try again.');
-        toast.error('An error occurred during account creation. Please try again.');
+        setServerError(
+          "An error occurred during account creation. Please try again.",
+        );
+        toast.error(
+          "An error occurred during account creation. Please try again.",
+        );
       } finally {
         setLoading(false);
       }
@@ -357,18 +421,18 @@ setSubmitted(true);
   const handleResendOtp = async () => {
     if (otpCountdown > 0 || loading) return;
     setLoading(true);
-    setServerError('');
-    setOtpSentMsg('');
+    setServerError("");
+    setOtpSentMsg("");
     try {
-      const res = await fetch('/api/auth/otp/send', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("/api/auth/otp/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: emailForOtp || form.email }),
       });
       const data = await res.json();
 
       if (!res.ok) {
-        const errMsg = data.error || 'Failed to resend verification code.';
+        const errMsg = data.error || "Failed to resend verification code.";
         setServerError(errMsg);
         toast.error(errMsg);
         setLoading(false);
@@ -380,12 +444,14 @@ setSubmitted(true);
       }
 
       setOtpCountdown(60);
-      setOtpSentMsg('A new 6-digit verification code has been sent to your email.');
-      setOtpVal('');
-      toast.success('New verification code sent!');
+      setOtpSentMsg(
+        "A new 6-digit verification code has been sent to your email.",
+      );
+      setOtpVal("");
+      toast.success("New verification code sent!");
     } catch {
-      setServerError('Failed to resend code. Please try again.');
-      toast.error('Failed to resend code. Please try again.');
+      setServerError("Failed to resend code. Please try again.");
+      toast.error("Failed to resend code. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -395,15 +461,17 @@ setSubmitted(true);
   const goBack = () => {
     if (step === 3) {
       // No back navigation on OTP step
-      setServerError('Cannot go back after verification step. Please complete verification.');
-      setTimeout(() => setServerError(''), 3000);
+      setServerError(
+        "Cannot go back after verification step. Please complete verification.",
+      );
+      setTimeout(() => setServerError(""), 3000);
       return;
     }
     setDirection(-1);
     setStep((s) => s - 1);
     setErrors({});
-    setServerError('');
-    setOtpSentMsg('');
+    setServerError("");
+    setOtpSentMsg("");
   };
 
   /* ── Success ─────────────────────────────────────────────────────── */
@@ -437,13 +505,18 @@ setSubmitted(true);
               </p>
               <ul className="flex flex-col gap-2.5">
                 {[
-                  'Complete your employer profile',
-                  'Post your first job listing',
-                  'Review incoming applications',
+                  "Complete your employer profile",
+                  "Post your first job listing",
+                  "Review incoming applications",
                 ].map((item, i) => (
-                  <li key={item} className="flex items-center gap-2.5 text-sm text-[#6B3A2A]/75">
+                  <li
+                    key={item}
+                    className="flex items-center gap-2.5 text-sm text-[#6B3A2A]/75"
+                  >
                     <div className="w-5 h-5 rounded-full bg-[#C8782A] flex items-center justify-center flex-shrink-0">
-                      <span className="text-white text-xs font-bold">{i + 1}</span>
+                      <span className="text-white text-xs font-bold">
+                        {i + 1}
+                      </span>
                     </div>
                     {item}
                   </li>
@@ -459,8 +532,11 @@ setSubmitted(true);
                 </Button>
               </Link>
               <Link href="/employers/dashboard">
-                <Button variant="outline" className="w-full border-[#C8782A]/25 text-[#6B3A2A] hover:bg-[#C8782A]/5 font-medium">
-                 Go to Dashboard
+                <Button
+                  variant="outline"
+                  className="w-full border-[#C8782A]/25 text-[#6B3A2A] hover:bg-[#C8782A]/5 hover:text-black font-medium"
+                >
+                  Go to Dashboard
                 </Button>
               </Link>
             </div>
@@ -520,59 +596,75 @@ setSubmitted(true);
                 <div className="flex flex-col gap-5">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="flex flex-col gap-1.5">
-                      <Label htmlFor="reg-first" className="text-[#6B3A2A] font-medium text-sm">
+                      <Label
+                        htmlFor="reg-first"
+                        className="text-[#6B3A2A] font-medium text-sm"
+                      >
                         First Name <span className="text-[#C8782A]">*</span>
                       </Label>
                       <Input
                         id="reg-first"
                         value={form.firstName}
-                        onChange={(e) => set('firstName', e.target.value)}
+                        onChange={(e) => set("firstName", e.target.value)}
                         placeholder="First name"
-                        className={`border-[#C8782A]/20 focus-visible:ring-[#C8782A]/30 ${errors.firstName ? 'border-red-400' : ''}`}
+                        className={`border-[#C8782A]/20 focus-visible:ring-[#C8782A]/30 ${errors.firstName ? "border-red-400" : ""}`}
                       />
                       <FieldError msg={errors.firstName} />
                     </div>
                     <div className="flex flex-col gap-1.5">
-                      <Label htmlFor="reg-last" className="text-[#6B3A2A] font-medium text-sm">
+                      <Label
+                        htmlFor="reg-last"
+                        className="text-[#6B3A2A] font-medium text-sm"
+                      >
                         Last Name <span className="text-[#C8782A]">*</span>
                       </Label>
                       <Input
                         id="reg-last"
                         value={form.lastName}
-                        onChange={(e) => set('lastName', e.target.value)}
+                        onChange={(e) => set("lastName", e.target.value)}
                         placeholder="Last name"
-                        className={`border-[#C8782A]/20 focus-visible:ring-[#C8782A]/30 ${errors.lastName ? 'border-red-400' : ''}`}
+                        className={`border-[#C8782A]/20 focus-visible:ring-[#C8782A]/30 ${errors.lastName ? "border-red-400" : ""}`}
                       />
                       <FieldError msg={errors.lastName} />
                     </div>
                   </div>
 
                   <div className="flex flex-col gap-1.5">
-                    <Label htmlFor="reg-org" className="text-[#6B3A2A] font-medium text-sm">
-                      Organization Name <span className="text-[#C8782A]">*</span>
+                    <Label
+                      htmlFor="reg-org"
+                      className="text-[#6B3A2A] font-medium text-sm"
+                    >
+                      Organization Name{" "}
+                      <span className="text-[#C8782A]">*</span>
                     </Label>
                     <Input
                       id="reg-org"
                       value={form.orgName}
-                      onChange={(e) => set('orgName', e.target.value)}
+                      onChange={(e) => set("orgName", e.target.value)}
                       placeholder="Your organization or company"
-                      className={`border-[#C8782A]/20 focus-visible:ring-[#C8782A]/30 ${errors.orgName ? 'border-red-400' : ''}`}
+                      className={`border-[#C8782A]/20 focus-visible:ring-[#C8782A]/30 ${errors.orgName ? "border-red-400" : ""}`}
                     />
                     <FieldError msg={errors.orgName} />
                   </div>
 
                   <div className="flex flex-col gap-1.5">
-                    <Label htmlFor="reg-province" className="text-[#6B3A2A] font-medium text-sm">
-                      Province / Territory <span className="text-[#C8782A]">*</span>
+                    <Label
+                      htmlFor="reg-province"
+                      className="text-[#6B3A2A] font-medium text-sm"
+                    >
+                      Province / Territory{" "}
+                      <span className="text-[#C8782A]">*</span>
                     </Label>
                     <select
                       id="reg-province"
                       value={form.province}
-                      onChange={(e) => set('province', e.target.value)}
-                      className={`w-full rounded-md border bg-white px-3 py-2 text-sm text-[#1C1C1C] focus:outline-none focus:ring-2 focus:ring-[#C8782A]/30 ${errors.province ? 'border-red-400' : 'border-[#C8782A]/20'}`}
+                      onChange={(e) => set("province", e.target.value)}
+                      className={`w-full rounded-md border bg-white px-3 py-2 text-sm text-[#1C1C1C] focus:outline-none focus:ring-2 focus:ring-[#C8782A]/30 ${errors.province ? "border-red-400" : "border-[#C8782A]/20"}`}
                     >
                       <option value="">Select province / territory</option>
-                      {PROVINCES.map((p) => <option key={p}>{p}</option>)}
+                      {PROVINCES.map((p) => (
+                        <option key={p}>{p}</option>
+                      ))}
                     </select>
                     <FieldError msg={errors.province} />
                   </div>
@@ -589,7 +681,10 @@ setSubmitted(true);
                     </div>
                   )}
                   <div className="flex flex-col gap-1.5">
-                    <Label htmlFor="reg-email" className="text-[#6B3A2A] font-medium text-sm">
+                    <Label
+                      htmlFor="reg-email"
+                      className="text-[#6B3A2A] font-medium text-sm"
+                    >
                       Email Address <span className="text-[#C8782A]">*</span>
                     </Label>
                     <Input
@@ -597,32 +692,35 @@ setSubmitted(true);
                       type="email"
                       autoComplete="email"
                       value={form.email}
-                      onChange={(e) => set('email', e.target.value)}
+                      onChange={(e) => set("email", e.target.value)}
                       placeholder="your@email.com"
-                      className={`border-[#C8782A]/20 focus-visible:ring-[#C8782A]/30 ${errors.email ? 'border-red-400' : ''}`}
+                      className={`border-[#C8782A]/20 focus-visible:ring-[#C8782A]/30 ${errors.email ? "border-red-400" : ""}`}
                     />
                     <FieldError msg={errors.email} />
                   </div>
 
                   <div className="flex flex-col gap-1.5">
-                    <Label htmlFor="reg-password" className="text-[#6B3A2A] font-medium text-sm">
+                    <Label
+                      htmlFor="reg-password"
+                      className="text-[#6B3A2A] font-medium text-sm"
+                    >
                       Password <span className="text-[#C8782A]">*</span>
                     </Label>
                     <div className="relative">
                       <Input
                         id="reg-password"
-                        type={showPw ? 'text' : 'password'}
+                        type={showPw ? "text" : "password"}
                         autoComplete="new-password"
                         value={form.password}
-                        onChange={(e) => set('password', e.target.value)}
+                        onChange={(e) => set("password", e.target.value)}
                         placeholder="Create a strong password"
-                        className={`border-[#C8782A]/20 focus-visible:ring-[#C8782A]/30 pr-10 ${errors.password ? 'border-red-400' : ''}`}
+                        className={`border-[#C8782A]/20 focus-visible:ring-[#C8782A]/30 pr-10 ${errors.password ? "border-red-400" : ""}`}
                       />
                       <button
                         type="button"
                         onClick={() => setShowPw((v) => !v)}
                         className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B3A2A]/40 hover:text-[#C8782A] transition-colors"
-                        aria-label={showPw ? 'Hide password' : 'Show password'}
+                        aria-label={showPw ? "Hide password" : "Show password"}
                       >
                         {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
                       </button>
@@ -632,26 +730,35 @@ setSubmitted(true);
                   </div>
 
                   <div className="flex flex-col gap-1.5">
-                    <Label htmlFor="reg-confirm" className="text-[#6B3A2A] font-medium text-sm">
+                    <Label
+                      htmlFor="reg-confirm"
+                      className="text-[#6B3A2A] font-medium text-sm"
+                    >
                       Confirm Password <span className="text-[#C8782A]">*</span>
                     </Label>
                     <div className="relative">
                       <Input
                         id="reg-confirm"
-                        type={showConfirmPw ? 'text' : 'password'}
+                        type={showConfirmPw ? "text" : "password"}
                         autoComplete="new-password"
                         value={form.confirmPassword}
-                        onChange={(e) => set('confirmPassword', e.target.value)}
+                        onChange={(e) => set("confirmPassword", e.target.value)}
                         placeholder="Repeat your password"
-                        className={`border-[#C8782A]/20 focus-visible:ring-[#C8782A]/30 pr-10 ${errors.confirmPassword ? 'border-red-400' : ''}`}
+                        className={`border-[#C8782A]/20 focus-visible:ring-[#C8782A]/30 pr-10 ${errors.confirmPassword ? "border-red-400" : ""}`}
                       />
                       <button
                         type="button"
                         onClick={() => setShowConfirmPw((v) => !v)}
                         className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B3A2A]/40 hover:text-[#C8782A] transition-colors"
-                        aria-label={showConfirmPw ? 'Hide password' : 'Show password'}
+                        aria-label={
+                          showConfirmPw ? "Hide password" : "Show password"
+                        }
                       >
-                        {showConfirmPw ? <EyeOff size={16} /> : <Eye size={16} />}
+                        {showConfirmPw ? (
+                          <EyeOff size={16} />
+                        ) : (
+                          <Eye size={16} />
+                        )}
                       </button>
                     </div>
                     <FieldError msg={errors.confirmPassword} />
@@ -662,14 +769,25 @@ setSubmitted(true);
                       <input
                         type="checkbox"
                         checked={form.agreeTerms}
-                        onChange={(e) => set('agreeTerms', e.target.checked)}
+                        onChange={(e) => set("agreeTerms", e.target.checked)}
                         className="mt-0.5 w-4 h-4 accent-[#C8782A] flex-shrink-0"
                       />
                       <span className="text-sm text-[#6B3A2A]/70 leading-relaxed">
-                        I agree to Aboriginal Jobs Canada's{' '}
-                        <a href="#" className="text-[#C8782A] hover:underline font-medium">Terms of Service</a>
-                        {' '}and{' '}
-                        <a href="#" className="text-[#C8782A] hover:underline font-medium">Privacy Policy</a>.
+                        I agree to Aboriginal Jobs Canada's{" "}
+                        <a
+                          href="/terms"
+                          className="text-[#C8782A] hover:underline font-medium"
+                        >
+                          Terms of Service
+                        </a>{" "}
+                        and{" "}
+                        <a
+                          href="privacy"
+                          className="text-[#C8782A] hover:underline font-medium"
+                        >
+                          Privacy Policy
+                        </a>
+                        .
                       </span>
                     </label>
                     <FieldError msg={errors.agreeTerms} />
@@ -685,11 +803,15 @@ setSubmitted(true);
                   </div>
 
                   <div className="text-center">
-                    <h3 className="font-bold text-lg text-[#1C1C1C]">Enter Verification Code</h3>
+                    <h3 className="font-bold text-lg text-[#1C1C1C]">
+                      Enter Verification Code
+                    </h3>
                     <p className="text-xs text-[#6B3A2A]/60 mt-1 max-w-xs mx-auto leading-relaxed">
                       We sent a 6-digit verification code to
                     </p>
-                    <p className="text-sm text-[#C8782A] font-semibold mt-0.5">{form.email}</p>
+                    <p className="text-sm text-[#C8782A] font-semibold mt-0.5">
+                      {form.email}
+                    </p>
                   </div>
 
                   {otpSentMsg && (
@@ -714,15 +836,33 @@ setSubmitted(true);
                       disabled={loading}
                     >
                       <InputOTPGroup>
-                        <InputOTPSlot index={0} className="border-[#C8782A]/30 focus:border-[#C8782A] w-10 h-12 sm:w-12 sm:h-14 text-lg" />
-                        <InputOTPSlot index={1} className="border-[#C8782A]/30 focus:border-[#C8782A] w-10 h-12 sm:w-12 sm:h-14 text-lg" />
-                        <InputOTPSlot index={2} className="border-[#C8782A]/30 focus:border-[#C8782A] w-10 h-12 sm:w-12 sm:h-14 text-lg" />
+                        <InputOTPSlot
+                          index={0}
+                          className="border-[#C8782A]/30 focus:border-[#C8782A] w-10 h-12 sm:w-12 sm:h-14 text-lg"
+                        />
+                        <InputOTPSlot
+                          index={1}
+                          className="border-[#C8782A]/30 focus:border-[#C8782A] w-10 h-12 sm:w-12 sm:h-14 text-lg"
+                        />
+                        <InputOTPSlot
+                          index={2}
+                          className="border-[#C8782A]/30 focus:border-[#C8782A] w-10 h-12 sm:w-12 sm:h-14 text-lg"
+                        />
                       </InputOTPGroup>
                       <InputOTPSeparator />
                       <InputOTPGroup>
-                        <InputOTPSlot index={3} className="border-[#C8782A]/30 focus:border-[#C8782A] w-10 h-12 sm:w-12 sm:h-14 text-lg" />
-                        <InputOTPSlot index={4} className="border-[#C8782A]/30 focus:border-[#C8782A] w-10 h-12 sm:w-12 sm:h-14 text-lg" />
-                        <InputOTPSlot index={5} className="border-[#C8782A]/30 focus:border-[#C8782A] w-10 h-12 sm:w-12 sm:h-14 text-lg" />
+                        <InputOTPSlot
+                          index={3}
+                          className="border-[#C8782A]/30 focus:border-[#C8782A] w-10 h-12 sm:w-12 sm:h-14 text-lg"
+                        />
+                        <InputOTPSlot
+                          index={4}
+                          className="border-[#C8782A]/30 focus:border-[#C8782A] w-10 h-12 sm:w-12 sm:h-14 text-lg"
+                        />
+                        <InputOTPSlot
+                          index={5}
+                          className="border-[#C8782A]/30 focus:border-[#C8782A] w-10 h-12 sm:w-12 sm:h-14 text-lg"
+                        />
                       </InputOTPGroup>
                     </InputOTP>
                   </div>
@@ -731,7 +871,10 @@ setSubmitted(true);
                   <div className="text-center w-full">
                     {otpCountdown > 0 ? (
                       <p className="text-xs text-[#6B3A2A]/50">
-                        Resend code in <span className="font-semibold text-[#6B3A2A]">{otpCountdown}s</span>
+                        Resend code in{" "}
+                        <span className="font-semibold text-[#6B3A2A]">
+                          {otpCountdown}s
+                        </span>
                       </p>
                     ) : (
                       <button
@@ -740,7 +883,10 @@ setSubmitted(true);
                         disabled={loading}
                         className="inline-flex items-center gap-1.5 text-xs text-[#C8782A] hover:text-[#B06820] font-semibold transition-colors disabled:opacity-50"
                       >
-                        <RefreshCw size={12} className={loading ? "animate-spin" : ""} />
+                        <RefreshCw
+                          size={12}
+                          className={loading ? "animate-spin" : ""}
+                        />
                         Resend Verification Code
                       </button>
                     )}
@@ -763,14 +909,16 @@ setSubmitted(true);
           </AnimatePresence>
 
           {/* Navigation buttons - Back button hidden on step 3 */}
-          <div className={`flex gap-3 px-8 pb-8 ${step > 1 && step !== 3 ? 'justify-between' : 'justify-end'}`}>
+          <div
+            className={`flex gap-3 px-8 pb-8 ${step > 1 && step !== 3 ? "justify-between" : "justify-end"}`}
+          >
             {step > 1 && step !== 3 && (
               <Button
                 type="button"
                 variant="outline"
                 onClick={goBack}
                 disabled={loading}
-                className="border-[#C8782A]/25 text-[#6B3A2A] hover:bg-[#C8782A]/5 font-medium"
+                className="border-[#C8782A]/25 text-[#6B3A2A] hover:bg-[#C8782A]/5 hover:text-black font-medium"
               >
                 <ArrowLeft size={15} className="mr-1.5" /> Back
               </Button>
@@ -783,9 +931,24 @@ setSubmitted(true);
             >
               {loading ? (
                 <span className="flex items-center gap-2">
-                  <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                  <svg
+                    className="animate-spin w-4 h-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8v8H4z"
+                    />
                   </svg>
                   Processing…
                 </span>
@@ -803,8 +966,11 @@ setSubmitted(true);
         </div>
 
         <p className="text-center text-sm text-[#6B3A2A]/60 mt-5">
-          Already have an account?{' '}
-          <Link href="/login" className="text-[#C8782A] font-semibold hover:underline">
+          Already have an account?{" "}
+          <Link
+            href="/login"
+            className="text-[#C8782A] font-semibold hover:underline"
+          >
             Sign in
           </Link>
         </p>
@@ -815,11 +981,13 @@ setSubmitted(true);
 
 export default function RegisterPage() {
   return (
-    <Suspense fallback={
-      <div className="bg-[#FAF5EE] min-h-[85vh] flex items-center justify-center py-16 px-4">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C8782A]" />
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="bg-[#FAF5EE] min-h-[85vh] flex items-center justify-center py-16 px-4">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C8782A]" />
+        </div>
+      }
+    >
       <RegisterForm />
     </Suspense>
   );
