@@ -28,6 +28,7 @@ import JobPostingPreview, {
 } from "@/components/JobPostingPreview";
 import { useSession } from "@/lib/auth/auth-client";
 import toast from "react-hot-toast";
+import { useQueryClient } from "@tanstack/react-query";
 
 /* ── Animation variants ─────────────────────────────────────────────── */
 const fadeUp = {
@@ -153,6 +154,71 @@ const validateEmail = (email: string): boolean => {
 const validatePhone = (phone: string): boolean => {
   return /^[\+\d\s\-\(\)]{10,}$/.test(phone);
 };
+
+/* ── Post Job Skeleton ──────────────────────────────────────────────── */
+function PostJobSkeleton() {
+  return (
+    <section className="bg-[#FAF5EE] min-h-[85vh] py-12 lg:py-20 relative overflow-hidden">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="animate-pulse">
+          {/* Breadcrumb */}
+          <div className="flex items-center gap-2 mb-4">
+            <div className="h-4 w-20 bg-[#C8782A]/10 rounded" />
+            <div className="h-3 w-3 bg-[#C8782A]/10 rounded-full" />
+            <div className="h-4 w-24 bg-[#C8782A]/20 rounded" />
+          </div>
+          
+          <div className="h-4 w-28 bg-[#C8782A]/15 rounded mb-3" />
+          <div className="h-10 w-64 bg-[#C8782A]/15 rounded mb-8 sm:mb-10" />
+
+          <div className="flex flex-col xl:flex-row gap-8 lg:gap-12">
+            <div className="flex-1 max-w-4xl bg-white rounded-3xl p-6 sm:p-10 border border-[#C8782A]/10 shadow-sm">
+              {[1, 2, 3].map((section) => (
+                <div key={section} className="mb-10">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-7 h-7 rounded-full bg-[#C8782A]/20" />
+                    <div className="h-6 w-48 bg-neutral-200 rounded" />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <div className="h-4 w-24 bg-neutral-200 rounded" />
+                      <div className="h-11 w-full bg-neutral-100 rounded-xl" />
+                    </div>
+                    <div className="space-y-2">
+                      <div className="h-4 w-32 bg-neutral-200 rounded" />
+                      <div className="h-11 w-full bg-neutral-100 rounded-xl" />
+                    </div>
+                    {section === 2 && (
+                       <div className="space-y-2 md:col-span-2 mt-4">
+                         <div className="h-4 w-32 bg-neutral-200 rounded" />
+                         <div className="h-32 w-full bg-neutral-100 rounded-xl" />
+                       </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+              <div className="flex gap-4 pt-4 border-t border-[#C8782A]/10">
+                <div className="h-11 w-32 bg-[#C8782A]/20 rounded-xl" />
+                <div className="h-11 w-24 bg-neutral-200 rounded-xl" />
+              </div>
+            </div>
+
+            <div className="xl:w-[380px] flex-shrink-0 space-y-5 hidden xl:block">
+              <div className="bg-white rounded-2xl p-6 border border-[#C8782A]/10 h-[400px]">
+                 <div className="h-6 w-32 bg-neutral-200 rounded mb-6" />
+                 <div className="space-y-4">
+                   <div className="h-4 w-full bg-neutral-100 rounded" />
+                   <div className="h-4 w-5/6 bg-neutral-100 rounded" />
+                   <div className="h-4 w-4/6 bg-neutral-100 rounded" />
+                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
 
 /* ── Tip box ────────────────────────────────────────────────────────── */
 function Tip({ children }: { children: React.ReactNode }) {
@@ -355,6 +421,7 @@ function PostAJobContent() {
   const isEditMode = !!jobIdParam;
 
   const { session } = useSession();
+  const queryClient = useQueryClient();
 
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(false);
@@ -721,7 +788,12 @@ function PostAJobContent() {
         isEditMode ? "Job updated successfully!" : "Job posted successfully!",
       );
 
+      // Invalidate queries so the dashboard refetches the fresh data
+      queryClient.invalidateQueries({ queryKey: ["employer-jobs"] });
+      queryClient.invalidateQueries({ queryKey: ["employer-stats"] });
+
       if (!isEditMode) {
+        window.scrollTo({ top: 0, behavior: "smooth" });
         setSubmitted(true);
       } else {
         router.push("/employers/dashboard");
@@ -760,19 +832,12 @@ function PostAJobContent() {
   };
 
   if (loadingData) {
-    return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C8782A] mx-auto mb-4" />
-          <p className="text-[#6B3A2A]/60">Loading job data...</p>
-        </div>
-      </div>
-    );
+    return <PostJobSkeleton />;
   }
 
   if (submitted) {
     return (
-      <section className="bg-[#FAF5EE] min-h-[70vh] flex items-center justify-center py-20 px-4">
+      <section className="bg-[#FAF5EE] min-h-[85vh] flex items-center justify-center py-20 px-4">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -1556,16 +1621,7 @@ function PostAJobContent() {
 
 export default function PostAJobPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-[60vh] flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C8782A] mx-auto mb-4" />
-            <p className="text-[#6B3A2A]/60">Loading...</p>
-          </div>
-        </div>
-      }
-    >
+    <Suspense fallback={<PostJobSkeleton />}>
       <PostAJobContent />
     </Suspense>
   );

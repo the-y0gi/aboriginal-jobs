@@ -555,46 +555,191 @@ export default function JobDetailPage() {
   // Skeleton Loader
   if (isLoading) {
     return (
-      <div className="min-h-[80vh] bg-[#FAF5EE]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 lg:py-14">
-          <div className="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-6 lg:p-10 border border-[#C8782A]/10 animate-pulse">
-            <div className="h-6 w-24 bg-[#FAF5EE] rounded mb-6" />
-            <div className="flex flex-wrap gap-2 mb-4">
-              <div className="h-6 w-16 bg-[#FAF5EE] rounded-full" />
-              <div className="h-6 w-24 bg-[#FAF5EE] rounded-full" />
-              <div className="h-6 w-20 bg-[#FAF5EE] rounded-full" />
-            </div>
-            <div className="h-8 sm:h-10 lg:h-40 w-3/4 bg-[#FAF5EE] rounded mb-2" />
-            <div className="h-5 sm:h-6 w-32 bg-[#FAF5EE] rounded mb-5" />
-            <div className="flex flex-wrap gap-2 sm:gap-3">
-              <div className="h-7 sm:h-8 w-28 bg-[#FAF5EE] rounded-full" />
-              <div className="h-7 sm:h-8 w-24 bg-[#FAF5EE] rounded-full" />
-              <div className="h-7 sm:h-8 w-32 bg-[#FAF5EE] rounded-full" />
+      <div className="min-h-screen bg-[#FAF5EE] animate-pulse">
+        {/* Breadcrumb */}
+        <div className="border-b border-[#C8782A]/10 bg-[#FAF5EE]">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div className="flex items-center gap-2">
+              <div className="h-3 w-12 rounded bg-[#E8D9C7]" />
+              <div className="h-3 w-3 rounded bg-[#E8D9C7]" />
+              <div className="h-3 w-16 rounded bg-[#E8D9C7]" />
+              <div className="h-3 w-3 rounded bg-[#E8D9C7]" />
+              <div className="h-3 w-32 rounded bg-[#E8D9C7]" />
             </div>
           </div>
         </div>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-          <div className="flex flex-col lg:flex-row gap-8 lg:gap-10">
-            <div className="flex-1">
-              <div className="h-7 w-40 bg-[#FAF5EE] rounded mb-4" />
-              <div className="space-y-3">
-                <div className="h-4 w-full bg-[#FAF5EE] rounded" />
-                <div className="h-4 w-full bg-[#FAF5EE] rounded" />
-                <div className="h-4 w-3/4 bg-[#FAF5EE] rounded" />
+
+        {/* Hero Section */}
+        <section className="bg-[#FAF5EE] py-8 sm:py-10 lg:py-14">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="bg-white rounded-3xl border border-[#C8782A]/10 shadow-sm p-5 sm:p-6 lg:p-10">
+              {/* Back Button */}
+              <div className="h-4 w-32 rounded bg-[#F3E7D8] mb-6" />
+
+              <div className="flex flex-col lg:flex-row justify-between gap-8">
+                {/* Left */}
+                <div className="flex-1">
+                  {/* Badges */}
+                  <div className="flex flex-wrap gap-2 mb-5">
+                    <div className="h-6 w-20 rounded-full bg-[#F3E7D8]" />
+                    <div className="h-6 w-28 rounded-full bg-[#F3E7D8]" />
+                    <div className="h-6 w-16 rounded-full bg-[#F3E7D8]" />
+                    <div className="h-6 w-24 rounded-full bg-[#F3E7D8]" />
+                  </div>
+
+                  {/* Title */}
+                  <div className="space-y-3 mb-4">
+                    <div className="h-10 w-full max-w-2xl rounded bg-[#F3E7D8]" />
+                    <div className="h-10 w-3/4 rounded bg-[#F3E7D8]" />
+                  </div>
+
+                  {/* Company */}
+                  <div className="h-5 w-48 rounded bg-[#F3E7D8] mb-6" />
+
+                  {/* Chips */}
+                  <div className="flex flex-wrap gap-3">
+                    <div className="h-10 w-44 rounded-full bg-[#F7EFE5]" />
+                    <div className="h-10 w-32 rounded-full bg-[#F7EFE5]" />
+                    <div className="h-10 w-52 rounded-full bg-[#F7EFE5]" />
+                    <div className="h-10 w-36 rounded-full bg-[#F7EFE5]" />
+                  </div>
+                </div>
+
+                {/* Right CTA */}
+                <div className="hidden lg:flex flex-col gap-3 w-52">
+                  <div className="h-11 rounded-xl bg-[#E8D9C7]" />
+                  <div className="h-11 rounded-xl bg-[#F3E7D8]" />
+                  <div className="h-4 w-32 mx-auto rounded bg-[#F3E7D8]" />
+                </div>
               </div>
             </div>
-            <div className="lg:w-[320px]">
-              <div className="h-64 bg-[#FAF5EE] rounded-2xl" />
+          </div>
+        </section>
+
+        {/* Main Body */}
+        <section className="bg-white py-10 pb-20">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col lg:flex-row gap-8 lg:gap-10">
+              {/* LEFT CONTENT */}
+              <div className="flex-1">
+                {/* About Role */}
+                <div className="mb-10">
+                  <div className="h-8 w-52 rounded bg-[#F3E7D8] mb-5" />
+
+                  <div className="space-y-3">
+                    <div className="h-4 w-full rounded bg-[#F8F1E8]" />
+                    <div className="h-4 w-full rounded bg-[#F8F1E8]" />
+                    <div className="h-4 w-5/6 rounded bg-[#F8F1E8]" />
+                    <div className="h-4 w-full rounded bg-[#F8F1E8]" />
+                    <div className="h-4 w-4/6 rounded bg-[#F8F1E8]" />
+                  </div>
+                </div>
+
+                {/* Requirements */}
+                <div className="mb-10">
+                  <div className="h-8 w-72 rounded bg-[#F3E7D8] mb-5" />
+
+                  <div className="space-y-3">
+                    <div className="h-4 w-full rounded bg-[#F8F1E8]" />
+                    <div className="h-4 w-11/12 rounded bg-[#F8F1E8]" />
+                    <div className="h-4 w-3/4 rounded bg-[#F8F1E8]" />
+                    <div className="h-4 w-full rounded bg-[#F8F1E8]" />
+                  </div>
+                </div>
+
+                {/* Additional Details Card */}
+                <div className="bg-[#FAF5EE] border border-[#C8782A]/10 rounded-2xl p-6 mb-8">
+                  <div className="h-7 w-44 rounded bg-[#E8D9C7] mb-6" />
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    {Array.from({ length: 4 }).map((_, i) => (
+                      <div key={i} className="flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-[#F3E7D8]" />
+                        <div className="flex-1">
+                          <div className="h-3 w-24 rounded bg-[#F3E7D8] mb-2" />
+                          <div className="h-4 w-36 rounded bg-[#E8D9C7]" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Mobile CTA */}
+                <div className="lg:hidden bg-white border border-[#C8782A]/10 rounded-2xl p-4 shadow-lg flex flex-col gap-3 sticky bottom-4">
+                  <div className="h-11 rounded-xl bg-[#E8D9C7]" />
+                  <div className="h-11 rounded-xl bg-[#F3E7D8]" />
+                </div>
+              </div>
+
+              {/* RIGHT SIDEBAR */}
+              <div className="lg:w-[320px] flex-shrink-0">
+                <div className="flex flex-col gap-5">
+                  {/* Apply Card */}
+                  <div className="bg-[#FAF5EE] border border-[#C8782A]/10 rounded-2xl p-6">
+                    <div className="h-11 rounded-xl bg-[#E8D9C7] mb-5" />
+
+                    <div className="space-y-4">
+                      <div className="h-4 w-full rounded bg-[#F3E7D8]" />
+                      <div className="h-4 w-5/6 rounded bg-[#F3E7D8]" />
+                      <div className="h-4 w-4/6 rounded bg-[#F3E7D8]" />
+                    </div>
+                  </div>
+
+                  {/* Employer Card */}
+                  <div className="bg-white border border-[#C8782A]/10 rounded-2xl p-6">
+                    <div className="h-7 w-44 rounded bg-[#F3E7D8] mb-5" />
+
+                    <div className="flex items-center gap-3 mb-5">
+                      <div className="w-12 h-12 rounded-xl bg-[#F3E7D8]" />
+
+                      <div className="flex-1">
+                        <div className="h-4 w-36 rounded bg-[#E8D9C7] mb-2" />
+                        <div className="h-3 w-28 rounded bg-[#F3E7D8]" />
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div className="h-10 rounded-xl bg-[#FAF5EE]" />
+                      <div className="h-10 rounded-xl bg-[#FAF5EE]" />
+                    </div>
+                  </div>
+
+                  {/* Similar Jobs */}
+                  <div className="bg-white border border-[#C8782A]/10 rounded-2xl p-6">
+                    <div className="h-7 w-36 rounded bg-[#F3E7D8] mb-5" />
+
+                    <div className="space-y-3">
+                      {Array.from({ length: 4 }).map((_, i) => (
+                        <div
+                          key={i}
+                          className="border border-[#C8782A]/10 rounded-xl p-4"
+                        >
+                          <div className="flex gap-3">
+                            <div className="w-10 h-10 rounded-lg bg-[#F3E7D8]" />
+
+                            <div className="flex-1">
+                              <div className="h-4 w-full rounded bg-[#E8D9C7] mb-2" />
+                              <div className="h-3 w-28 rounded bg-[#F3E7D8] mb-2" />
+                              <div className="h-3 w-20 rounded bg-[#F8F1E8]" />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="h-4 w-32 rounded bg-[#F3E7D8] mt-5" />
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
+        </section>
       </div>
     );
   }
-
   if (!job) {
     return (
-      <section className="bg-[#FAF5EE] min-h-[60vh] flex items-center justify-center py-20 px-4">
+      <section className="bg-[#FAF5EE] min-h-[85vh] flex items-center justify-center py-20 px-4">
         <div className="text-center max-w-md">
           <div className="w-16 h-16 rounded-full bg-[#C8782A]/10 flex items-center justify-center mx-auto mb-5">
             <AlertCircle size={28} className="text-[#C8782A]" />

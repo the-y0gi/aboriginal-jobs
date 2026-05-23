@@ -756,6 +756,45 @@ function JobSkeletonCard() {
   );
 }
 
+/* ── Full Dashboard Skeleton ────────────────────────────────────────── */
+function DashboardSkeleton() {
+  return (
+    <div className="bg-gradient-to-b from-[#FAF5EE]/70 to-white min-h-[85vh] animate-pulse">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 border-b border-neutral-100">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-5">
+          <div>
+            <div className="h-8 w-64 bg-[#C8782A]/15 rounded mb-2" />
+            <div className="h-4 w-48 bg-neutral-200 rounded" />
+          </div>
+          <div className="h-11 w-36 bg-[#C8782A]/20 rounded-xl" />
+        </div>
+      </div>
+      
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 sm:gap-5 mb-8">
+          {[1,2,3].map(i => (
+             <div key={i} className="bg-white p-5 rounded-2xl border border-[#C8782A]/10 h-[100px]">
+               <div className="h-4 w-24 bg-neutral-200 rounded mb-3" />
+               <div className="h-8 w-16 bg-neutral-200 rounded" />
+             </div>
+          ))}
+        </div>
+        
+        <div className="flex flex-col sm:flex-row gap-3 mb-6">
+          <div className="h-11 flex-1 bg-neutral-100 rounded-xl" />
+          <div className="h-11 w-full sm:w-[140px] bg-neutral-100 rounded-xl" />
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+           {[1,2,3,4].map(i => (
+             <JobSkeletonCard key={i} />
+           ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ── Main Dashboard Component ───────────────────────────────────────── */
 export default function EmployerDashboard() {
   const router = useRouter();
@@ -900,24 +939,12 @@ export default function EmployerDashboard() {
   };
 
   if (sessionLoading) {
-    return (
-      <div className="min-h-[70vh] flex items-center justify-center bg-white">
-        <div className="text-center">
-          <Loader2
-            size={36}
-            className="animate-spin text-[#C8782A] mx-auto mb-3 opacity-80"
-          />
-          <p className="text-sm font-medium text-[#6B3A2A]/70">
-            Loading workspace dashboard...
-          </p>
-        </div>
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   if (!session?.user) {
     return (
-      <div className="min-h-[70vh] flex items-center justify-center bg-white p-4">
+      <div className="min-h-[85vh] flex items-center justify-center bg-white p-4">
         <div className="text-center max-w-sm w-full border border-[#C8782A]/10 p-8 rounded-2xl bg-[#FAF5EE]/20 shadow-sm">
           <AlertCircle
             size={44}
