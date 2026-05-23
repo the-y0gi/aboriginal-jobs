@@ -607,7 +607,7 @@ function RegisterForm() {
                         value={form.firstName}
                         onChange={(e) => set("firstName", e.target.value)}
                         placeholder="First name"
-                        className={`border-[#C8782A]/20 focus-visible:ring-[#C8782A]/30 ${errors.firstName ? "border-red-400" : ""}`}
+                        className={`border-[#C8782A]/20 placeholder:text-[#1C1C1C]/30 focus-visible:ring-[#C8782A]/30 ${errors.firstName ? "border-red-400" : ""}`}
                       />
                       <FieldError msg={errors.firstName} />
                     </div>
@@ -623,7 +623,7 @@ function RegisterForm() {
                         value={form.lastName}
                         onChange={(e) => set("lastName", e.target.value)}
                         placeholder="Last name"
-                        className={`border-[#C8782A]/20 focus-visible:ring-[#C8782A]/30 ${errors.lastName ? "border-red-400" : ""}`}
+                        className={`border-[#C8782A]/20 placeholder:text-[#1C1C1C]/30 focus-visible:ring-[#C8782A]/30 ${errors.lastName ? "border-red-400" : ""}`}
                       />
                       <FieldError msg={errors.lastName} />
                     </div>
@@ -642,7 +642,7 @@ function RegisterForm() {
                       value={form.orgName}
                       onChange={(e) => set("orgName", e.target.value)}
                       placeholder="Your organization or company"
-                      className={`border-[#C8782A]/20 focus-visible:ring-[#C8782A]/30 ${errors.orgName ? "border-red-400" : ""}`}
+                      className={`border-[#C8782A]/20 placeholder:text-[#1C1C1C]/30 focus-visible:ring-[#C8782A]/30 ${errors.orgName ? "border-red-400" : ""}`}
                     />
                     <FieldError msg={errors.orgName} />
                   </div>
@@ -694,7 +694,7 @@ function RegisterForm() {
                       value={form.email}
                       onChange={(e) => set("email", e.target.value)}
                       placeholder="your@email.com"
-                      className={`border-[#C8782A]/20 focus-visible:ring-[#C8782A]/30 ${errors.email ? "border-red-400" : ""}`}
+                      className={`border-[#C8782A]/20 placeholder:text-[#1C1C1C]/30 focus-visible:ring-[#C8782A]/30 ${errors.email ? "border-red-400" : ""}`}
                     />
                     <FieldError msg={errors.email} />
                   </div>
@@ -714,7 +714,7 @@ function RegisterForm() {
                         value={form.password}
                         onChange={(e) => set("password", e.target.value)}
                         placeholder="Create a strong password"
-                        className={`border-[#C8782A]/20 focus-visible:ring-[#C8782A]/30 pr-10 ${errors.password ? "border-red-400" : ""}`}
+                        className={`border-[#C8782A]/20 placeholder:text-[#1C1C1C]/30 focus-visible:ring-[#C8782A]/30 pr-10 ${errors.password ? "border-red-400" : ""}`}
                       />
                       <button
                         type="button"
@@ -744,7 +744,7 @@ function RegisterForm() {
                         value={form.confirmPassword}
                         onChange={(e) => set("confirmPassword", e.target.value)}
                         placeholder="Repeat your password"
-                        className={`border-[#C8782A]/20 focus-visible:ring-[#C8782A]/30 pr-10 ${errors.confirmPassword ? "border-red-400" : ""}`}
+                        className={`border-[#C8782A]/20 placeholder:text-[#1C1C1C]/30 focus-visible:ring-[#C8782A]/30 pr-10 ${errors.confirmPassword ? "border-red-400" : ""}`}
                       />
                       <button
                         type="button"
