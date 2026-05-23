@@ -404,7 +404,7 @@ function ForgotPasswordModal({ isOpen, onClose }: ForgotPasswordModalProps) {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="your@email.com"
-                        className="mt-1.5 h-11 border-[#C8782A]/20 focus-visible:ring-[#C8782A]/30 text-sm rounded-xl"
+                        className="mt-1.5 h-11 placeholder:text-[#1C1C1C]/30 border-[#C8782A]/20 focus-visible:ring-[#C8782A]/30 text-sm rounded-xl"
                         onKeyDown={(e) => e.key === "Enter" && handleSendOTP()}
                       />
                       <p className="text-xs text-[#6B3A2A]/50 mt-2 font-medium leading-normal">
@@ -524,7 +524,7 @@ function ForgotPasswordModal({ isOpen, onClose }: ForgotPasswordModalProps) {
                       )}
                     </div>
 
-                    {devOtp && (
+                    {/* {devOtp && (
                       <div className="bg-[#FAF5EE] border border-[#C8782A]/15 rounded-xl p-3 text-center">
                         <p className="text-[10px] font-bold text-[#C8782A] uppercase tracking-wider mb-0.5">
                           🛠️ Dev Sandbox
@@ -536,7 +536,7 @@ function ForgotPasswordModal({ isOpen, onClose }: ForgotPasswordModalProps) {
                           </span>
                         </p>
                       </div>
-                    )}
+                    )} */}
 
                     <Button
                       onClick={handleVerifyOTP}
@@ -561,7 +561,7 @@ function ForgotPasswordModal({ isOpen, onClose }: ForgotPasswordModalProps) {
                           value={newPassword}
                           onChange={(e) => setNewPassword(e.target.value)}
                           placeholder="At least 8 characters"
-                          className="h-11 border-[#C8782A]/20 focus-visible:ring-[#C8782A]/30 pr-10 text-sm rounded-xl"
+                          className="h-11 border-[#C8782A]/20 placeholder:text-[#1C1C1C]/30 focus-visible:ring-[#C8782A]/30 pr-10 text-sm rounded-xl"
                         />
                         <button
                           type="button"
@@ -588,7 +588,7 @@ function ForgotPasswordModal({ isOpen, onClose }: ForgotPasswordModalProps) {
                           value={confirmPassword}
                           onChange={(e) => setConfirmPassword(e.target.value)}
                           placeholder="Re-enter password"
-                          className="h-11 border-[#C8782A]/20 focus-visible:ring-[#C8782A]/30 pr-10 text-sm rounded-xl"
+                          className="h-11 border-[#C8782A]/20 placeholder:text-[#1C1C1C]/30 focus-visible:ring-[#C8782A]/30 pr-10 text-sm rounded-xl"
                           onKeyDown={(e) =>
                             e.key === "Enter" && handleResetPassword()
                           }
