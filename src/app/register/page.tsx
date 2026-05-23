@@ -404,6 +404,7 @@ function RegisterForm() {
         }
 
         toast.success("Account created successfully! Welcome aboard!");
+        window.scrollTo({ top: 0, behavior: "smooth" });
         setSubmitted(true);
       } catch {
         setServerError(
@@ -776,6 +777,7 @@ function RegisterForm() {
                         I agree to Aboriginal Jobs Canada's{" "}
                         <a
                           href="/terms"
+                          target="blank"
                           className="text-[#C8782A] hover:underline font-medium"
                         >
                           Terms of Service
@@ -783,6 +785,7 @@ function RegisterForm() {
                         and{" "}
                         <a
                           href="privacy"
+                          target="blank"
                           className="text-[#C8782A] hover:underline font-medium"
                         >
                           Privacy Policy
