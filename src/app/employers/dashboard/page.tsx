@@ -31,6 +31,7 @@ import {
   Fingerprint,
   Hash,
   UserIcon,
+  Download,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -152,19 +153,34 @@ function getSalaryDisplay(salary: string, salaryType: string): string {
   return `$${salary}${typeMap[salaryType] || ""}`;
 }
 
-/* ── Stat Card Component ────────────────────────────────────────────── */
+/* ── Stat Card Component ────────────────────────────── */
 function StatCard({
   title,
   value,
   icon,
+  isLoading,
 }: {
   title: string;
   value: number;
   icon: React.ReactNode;
+  isLoading?: boolean;
 }) {
+  if (isLoading) {
+    return (
+      <Card className="border border-[#C8782A]/10 bg-white shadow-sm relative overflow-hidden rounded-2xl">
+        <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0 px-6 pt-5">
+          <Skeleton className="h-4 w-20 bg-neutral-200" />
+          <Skeleton className="h-8 w-8 rounded-xl bg-neutral-200" />
+        </CardHeader>
+        <CardContent className="px-6 pb-5 pt-1">
+          <Skeleton className="h-9 w-16 bg-neutral-200" />
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="border border-[#C8782A]/10 bg-white shadow-sm relative overflow-hidden group hover:border-[#C8782A]/30 transition-all duration-300 rounded-2xl">
-      {/* <div className="absolute top-0 left-0 w-1 h-full bg-[#C8782A]/20 group-hover:bg-[#C8782A] transition-colors duration-300" /> */}
       <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0 px-6 pt-5">
         <CardTitle className="text-xs font-bold text-[#6B3A2A]/60 uppercase tracking-wider">
           {title}
@@ -193,8 +209,7 @@ function ViewJobModal({
   onClose: () => void;
 }) {
   if (!job) return null;
-
-  // Background Scroll Prevention
+ // Background Scroll Prevention
   // useEffect(() => {
   //   if (open) {
   //     document.body.style.overflow = "hidden";
@@ -205,7 +220,6 @@ function ViewJobModal({
   //     document.body.style.overflow = "unset";
   //   };
   // }, [open]);
-
   const getApplyMethodDisplay = (method: ApplyMethod) => {
     switch (method.method) {
       case "email":
@@ -435,19 +449,23 @@ function ViewJobModal({
   );
 }
 
-/* ── Job Card Component ─────────────────────────────────────────────── */
+/* ── Job Card Component  ─────────────────────────────── */
 function JobCard({
   job,
   onView,
   onEdit,
   onDelete,
   onStatusChange,
+  onDownload,
+  isDownloading,
 }: {
   job: Job;
   onView: () => void;
   onEdit: () => void;
   onDelete: () => void;
   onStatusChange: (jobId: string, newStatus: string) => void;
+  onDownload: (jobId: string, jobTitle: string) => void;
+  isDownloading?: boolean;
 }) {
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
@@ -598,13 +616,31 @@ function JobCard({
       </CardContent>
 
       <CardFooter className="p-5 pt-0 flex gap-2 border-t border-neutral-50/50 bg-neutral-50/20">
+        {/* Responsive Download Button - Icon only on mobile, Icon + Text on laptop */}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onDownload(job._id, job.title)}
+          disabled={isDownloading}
+          className="flex-1 h-9 rounded-xl border-neutral-200 font-semibold text-xs text-neutral-600 hover:bg-[#C8782A]/5 hover:text-[#C8782A] hover:border-[#C8782A]/20 transition-all cursor-pointer"
+        >
+          {isDownloading ? (
+            <Loader2 size={13} className="animate-spin" />
+          ) : (
+            <>
+              <Download size={13} className="sm:mr-1" />
+              <span className="hidden sm:inline">Download</span>
+            </>
+          )}
+        </Button>
         <Button
           variant="outline"
           size="sm"
           onClick={onView}
           className="flex-1 h-9 rounded-xl border-neutral-200 font-semibold text-xs text-neutral-600 hover:bg-[#C8782A]/5 hover:text-[#C8782A] hover:border-[#C8782A]/20 transition-all cursor-pointer"
         >
-          <Eye size={13} className="mr-1" /> View
+          <Eye size={13} className="sm:mr-1" />
+          <span className="hidden sm:inline">View</span>
         </Button>
         <Button
           variant="outline"
@@ -612,7 +648,8 @@ function JobCard({
           onClick={onEdit}
           className="flex-1 h-9 rounded-xl border-neutral-200 font-semibold text-xs text-neutral-600 hover:bg-[#C8782A]/5 hover:text-[#C8782A] hover:border-[#C8782A]/20 transition-all cursor-pointer"
         >
-          <Edit size={13} className="mr-1" /> Edit
+          <Edit size={13} className="sm:mr-1" />
+          <span className="hidden sm:inline">Edit</span>
         </Button>
         <Button
           variant="destructive"
@@ -620,7 +657,8 @@ function JobCard({
           onClick={onDelete}
           className="flex-1 h-9 rounded-xl font-semibold text-xs bg-rose-50 text-rose-600 border border-rose-100 hover:bg-rose-600 hover:text-white transition-all cursor-pointer"
         >
-          <Trash2 size={13} className="mr-1" /> Delete
+          <Trash2 size={13} className="sm:mr-1" />
+          <span className="hidden sm:inline">Delete</span>
         </Button>
       </CardFooter>
     </Card>
@@ -685,6 +723,39 @@ function DeleteConfirmModal({
   );
 }
 
+/* ── Job Skeleton Card Component─────────────────────────────── */
+function JobSkeletonCard() {
+  return (
+    <Card className="border border-[#C8782A]/10 bg-white rounded-2xl overflow-hidden">
+      <CardHeader className="p-5 pb-3">
+        <div className="flex justify-between items-start">
+          <div className="flex-1 space-y-2">
+            <Skeleton className="h-5 w-3/4 bg-neutral-200" />
+            <Skeleton className="h-4 w-1/2 bg-neutral-200" />
+          </div>
+          <Skeleton className="h-6 w-20 rounded-full bg-neutral-200" />
+        </div>
+      </CardHeader>
+      <CardContent className="p-5 pt-0 pb-4">
+        <div className="space-y-2 border-y border-neutral-50 py-3 my-1">
+          <Skeleton className="h-4 w-full bg-neutral-200" />
+          <Skeleton className="h-4 w-2/3 bg-neutral-200" />
+        </div>
+        <div className="flex gap-1.5 mt-3">
+          <Skeleton className="h-5 w-16 rounded-md bg-neutral-200" />
+          <Skeleton className="h-5 w-20 rounded-md bg-neutral-200" />
+        </div>
+      </CardContent>
+      <CardFooter className="p-5 pt-0 flex gap-2">
+        <Skeleton className="h-9 flex-1 rounded-xl bg-neutral-200" />
+        <Skeleton className="h-9 flex-1 rounded-xl bg-neutral-200" />
+        <Skeleton className="h-9 flex-1 rounded-xl bg-neutral-200" />
+        <Skeleton className="h-9 flex-1 rounded-xl bg-neutral-200" />
+      </CardFooter>
+    </Card>
+  );
+}
+
 /* ── Main Dashboard Component ───────────────────────────────────────── */
 export default function EmployerDashboard() {
   const router = useRouter();
@@ -694,6 +765,7 @@ export default function EmployerDashboard() {
   const [currentPage, setCurrentPage] = useState(1);
   const [jobToDelete, setJobToDelete] = useState<Job | null>(null);
   const [viewJob, setViewJob] = useState<Job | null>(null);
+  const [downloadingJobId, setDownloadingJobId] = useState<string | null>(null);
   const itemsPerPage = 10;
 
   const { session, isPending: sessionLoading } = useSession();
@@ -716,7 +788,7 @@ export default function EmployerDashboard() {
   });
 
   // Fetch stats
-  const { data: statsData } = useQuery({
+  const { data: statsData, isLoading: statsLoading } = useQuery({
     queryKey: ["employer-stats"],
     queryFn: async () => {
       const res = await fetch("/api/employer/stats");
@@ -789,6 +861,42 @@ export default function EmployerDashboard() {
 
   const handleStatusChange = (jobId: string, newStatus: string) => {
     statusMutation.mutate({ jobId, status: newStatus });
+  };
+
+  const handleDownload = async (jobId: string, jobTitle: string) => {
+    setDownloadingJobId(jobId);
+    try {
+      toast.loading("Preparing download...", { id: "download" });
+
+      const response = await fetch(`/api/jobs/${jobId}/download`);
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Download failed");
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${jobTitle.replace(/[^a-z0-9]/gi, "-").toLowerCase()}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+
+      toast.success("Download started!", { id: "download" });
+    } catch (error) {
+      console.error("Download error:", error);
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to download job posting",
+        { id: "download" },
+      );
+    } finally {
+      setDownloadingJobId(null);
+    }
   };
 
   if (sessionLoading) {
@@ -882,16 +990,19 @@ export default function EmployerDashboard() {
             title="Total Jobs"
             value={stats.totalJobs}
             icon={<Briefcase size={18} />}
+            isLoading={statsLoading}
           />
           <StatCard
             title="Active Jobs"
             value={stats.activeJobs}
             icon={<CheckCircle size={18} className="text-emerald-600" />}
+            isLoading={statsLoading}
           />
           <StatCard
             title="Closed Jobs"
             value={stats.closedJobs}
             icon={<X size={18} className="text-neutral-500" />}
+            isLoading={statsLoading}
           />
         </div>
 
@@ -926,9 +1037,7 @@ export default function EmployerDashboard() {
               <option value="closed">Closed Only</option>
               <option value="expired">Expired Only</option>
             </select>
-            <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none border-l border-neutral-200 pl-2 text-neutral-500">
-              <ChevronRight size={14} className="rotate-90" />
-            </div>
+           
           </div>
         </div>
 
@@ -936,24 +1045,7 @@ export default function EmployerDashboard() {
         {jobsLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {[...Array(4)].map((_, i) => (
-              <Card
-                key={i}
-                className="border border-neutral-100 rounded-2xl p-5 space-y-4"
-              >
-                <div className="space-y-2">
-                  <Skeleton className="h-5 w-3/4 rounded-md" />
-                  <Skeleton className="h-4 w-1/2 rounded-md" />
-                </div>
-                <div className="space-y-2 pt-2 border-y border-neutral-50 py-3">
-                  <Skeleton className="h-4 w-full rounded-md" />
-                  <Skeleton className="h-4 w-2/3 rounded-md" />
-                </div>
-                <div className="flex gap-2 pt-2">
-                  <Skeleton className="h-9 flex-1 rounded-xl" />
-                  <Skeleton className="h-9 flex-1 rounded-xl" />
-                  <Skeleton className="h-9 flex-1 rounded-xl" />
-                </div>
-              </Card>
+              <JobSkeletonCard key={i} />
             ))}
           </div>
         ) : jobs.length === 0 ? (
@@ -990,6 +1082,8 @@ export default function EmployerDashboard() {
                   onEdit={() => handleEdit(job._id)}
                   onDelete={() => setJobToDelete(job)}
                   onStatusChange={handleStatusChange}
+                  onDownload={handleDownload}
+                  isDownloading={downloadingJobId === job._id}
                 />
               ))}
             </div>

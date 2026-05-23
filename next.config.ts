@@ -6,6 +6,8 @@ const nextConfig: NextConfig = {
     // serverActions are enabled by default in Next.js 15
   },
 
+  serverExternalPackages: ["pdfkit"],
+
   // Allow images from external domains
   images: {
     remotePatterns: [

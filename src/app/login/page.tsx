@@ -162,7 +162,7 @@ function LoginForm() {
                     if (errors.email) setErrors((prev) => ({ ...prev, email: undefined }));
                   }}
                   placeholder="your@email.com"
-                  className={`border-[#C8782A]/20 focus-visible:ring-[#C8782A]/30 ${errors.email ? 'border-red-400' : ''}`}
+                  className={`border-[#C8782A]/20 placeholder:text-[#1C1C1C]/30 focus-visible:ring-[#C8782A]/30 ${errors.email ? 'border-red-400' : ''}`}
                 />
                 <FieldError msg={errors.email} />
               </div>
@@ -191,7 +191,7 @@ function LoginForm() {
                       if (errors.password) setErrors((prev) => ({ ...prev, password: undefined }));
                     }}
                     placeholder="Your password"
-                    className={`border-[#C8782A]/20 focus-visible:ring-[#C8782A]/30 pr-10 ${errors.password ? 'border-red-400' : ''}`}
+                    className={`border-[#C8782A]/20 placeholder:text-[#1C1C1C]/30 focus-visible:ring-[#C8782A]/30 pr-10 ${errors.password ? 'border-red-400' : ''}`}
                   />
                   <button
                     type="button"

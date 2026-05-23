@@ -104,23 +104,39 @@ const provinces = [
 ];
 
 /* ── Validation Helpers ─────────────────────────────────────────────── */
+
+// Only letters, spaces, hyphens, apostrophes (for names)
 const validateName = (name: string): boolean => {
   return /^[A-Za-z\s\-'.]+$/.test(name);
 };
 
+// Only letters, spaces, hyphens (for city)
 const validateCity = (city: string): boolean => {
-  return /^[A-Za-z\s\-'.]+$/.test(city);
+  return /^[A-Za-z\s\-]+$/.test(city);
 };
 
+// Company name: letters, numbers, spaces, &, ., -, ' (most common in company names)
+const validateCompany = (company: string): boolean => {
+  return /^[A-Za-z0-9\s\&\.\-\'\(\)]+$/.test(company);
+};
+
+// Job title: letters, numbers, spaces, common punctuation
+const validateTitle = (title: string): boolean => {
+  return /^[A-Za-z0-9\s\-\,\'\(\)\/]+$/.test(title);
+};
+
+// NOC code: exactly 5 digits
 const validateNocCode = (code: string): boolean => {
   return /^\d{5}$/.test(code);
 };
 
+// Salary: number or range (e.g., 20 or 20-35)
 const validateSalary = (salary: string): boolean => {
   if (!salary) return true;
   return /^\d+(\s*-\s*\d+)?$/.test(salary);
 };
 
+// Website URL validation
 const validateWebsite = (url: string): boolean => {
   if (!url) return true;
   const pattern =
@@ -128,10 +144,12 @@ const validateWebsite = (url: string): boolean => {
   return pattern.test(url);
 };
 
+// Email validation
 const validateEmail = (email: string): boolean => {
   return /^\S+@\S+\.\S+$/.test(email);
 };
 
+// Phone validation (minimum 10 digits)
 const validatePhone = (phone: string): boolean => {
   return /^[\+\d\s\-\(\)]{10,}$/.test(phone);
 };
@@ -238,7 +256,7 @@ function ApplyMethodCard({
               value={data.email || ""}
               onChange={(e) => onChange("email", e.target.value)}
               placeholder="jobs@company.com"
-              className="mt-1 border-[#C8782A]/20"
+              className="mt-1 border-[#C8782A]/20 placeholder:text-[#1C1C1C]/30"
             />
             {errors?.email && (
               <p className="text-xs text-red-500 mt-1">{errors.email}</p>
@@ -256,7 +274,7 @@ function ApplyMethodCard({
               value={data.phone || ""}
               onChange={(e) => onChange("phone", e.target.value)}
               placeholder="+1 (555) 123-4567"
-              className="mt-1 border-[#C8782A]/20"
+              className="mt-1 border-[#C8782A]/20 placeholder:text-[#1C1C1C]/30"
             />
             {errors?.phone && (
               <p className="text-xs text-red-500 mt-1">{errors.phone}</p>
@@ -273,7 +291,7 @@ function ApplyMethodCard({
               value={data.mailAddress || ""}
               onChange={(e) => onChange("mailAddress", e.target.value)}
               placeholder="123 Street Name, City, Province, Postal Code"
-              className="mt-1 border-[#C8782A]/20"
+              className="mt-1 border-[#C8782A]/20 placeholder:text-[#1C1C1C]/30"
             />
             {errors?.mailAddress && (
               <p className="text-xs text-red-500 mt-1">{errors.mailAddress}</p>
@@ -291,7 +309,7 @@ function ApplyMethodCard({
                 value={data.inPersonAddress || ""}
                 onChange={(e) => onChange("inPersonAddress", e.target.value)}
                 placeholder="123 Business Ave, Suite 100, City, Province"
-                className="mt-1 border-[#C8782A]/20"
+                className="mt-1 border-[#C8782A]/20 placeholder:text-[#1C1C1C]/30"
               />
               {errors?.inPersonAddress && (
                 <p className="text-xs text-red-500 mt-1">
@@ -307,7 +325,7 @@ function ApplyMethodCard({
                 value={data.inPersonTiming || ""}
                 onChange={(e) => onChange("inPersonTiming", e.target.value)}
                 placeholder="Monday-Friday, 9AM to 5PM"
-                className="mt-1 border-[#C8782A]/20"
+                className="mt-1 border-[#C8782A]/20 placeholder:text-[#1C1C1C]/30"
               />
               {errors?.inPersonTiming && (
                 <p className="text-xs text-red-500 mt-1">
@@ -502,26 +520,35 @@ function PostAJobContent() {
       newErrors.title = "Job title is required";
     } else if (title.trim().length < 3) {
       newErrors.title = "Job title must be at least 3 characters";
+    } else if (!validateTitle(title.trim())) {
+      newErrors.title =
+        "Job title can only contain letters, numbers, spaces, and basic punctuation (-, ', /, ,)";
     }
 
     // Company validation
     if (!company.trim()) {
       newErrors.company = "Company name is required";
+    } else if (!validateCompany(company.trim())) {
+      newErrors.company =
+        "Company name can only contain letters, numbers, spaces, and & . - ' ( )";
     }
 
     // Contact Name validation
     if (!contactName.trim()) {
       newErrors.contactName = "Contact name is required";
+    } else if (contactName.trim().length < 2) {
+      newErrors.contactName = "Contact name must be at least 2 characters";
     } else if (!validateName(contactName)) {
       newErrors.contactName =
-        "Contact name should only contain letters, spaces, hyphens, and apostrophes";
+        "Contact name should only contain letters, spaces, hyphens, and apostrophes (no numbers)";
     }
 
     // City validation
     if (!city.trim()) {
       newErrors.city = "City is required";
     } else if (!validateCity(city)) {
-      newErrors.city = "City should only contain letters and spaces";
+      newErrors.city =
+        "City should only contain letters, spaces, and hyphens (no numbers or special characters)";
     }
 
     // Province validation
@@ -543,7 +570,7 @@ function PostAJobContent() {
     if (!nocCode.trim()) {
       newErrors.nocCode = "NOC code is required";
     } else if (!validateNocCode(nocCode)) {
-      newErrors.nocCode = "NOC code must be 5 digits (e.g., 21231)";
+      newErrors.nocCode = "NOC code must be exactly 5 digits (e.g., 21231)";
     }
 
     // Salary validation (optional but if provided, validate format)
@@ -553,7 +580,8 @@ function PostAJobContent() {
 
     // Website validation (optional)
     if (website && !validateWebsite(website)) {
-      newErrors.website = "Please enter a valid website URL";
+      newErrors.website =
+        "Please enter a valid website URL (e.g., https://example.com)";
     }
 
     // Description validation
@@ -884,13 +912,31 @@ function PostAJobContent() {
                     <Input
                       value={contactName}
                       onChange={(e) => {
-                        setContactName(e.target.value);
-                        if (errors.contactName) {
+                        const value = e.target.value;
+                        setContactName(value);
+                        if (value.trim()) {
+                          if (!validateName(value)) {
+                            setErrors((prev) => ({
+                              ...prev,
+                              contactName:
+                                "Contact name should only contain letters, spaces, hyphens, and apostrophes (no numbers)",
+                            }));
+                          } else if (value.trim().length < 2) {
+                            setErrors((prev) => ({
+                              ...prev,
+                              contactName:
+                                "Contact name must be at least 2 characters",
+                            }));
+                          } else {
+                            setErrors((prev) => ({ ...prev, contactName: "" }));
+                          }
+                        } else {
                           setErrors((prev) => ({ ...prev, contactName: "" }));
                         }
                       }}
                       onBlur={() => markTouched("contactName")}
                       placeholder="e.g. Sarah Johnson"
+                      className="placeholder:text-[#1C1C1C]/30"
                     />
                     {errors.contactName && touched.contactName && (
                       <p className="text-xs text-red-500 flex items-center gap-1">
@@ -907,12 +953,32 @@ function PostAJobContent() {
                     <Input
                       value={title}
                       onChange={(e) => {
-                        setTitle(e.target.value);
-                        if (errors.title)
+                        const value = e.target.value;
+                        setTitle(value);
+
+                        // Real-time validation
+                        if (value.trim()) {
+                          if (!validateTitle(value)) {
+                            setErrors((prev) => ({
+                              ...prev,
+                              title:
+                                "Job title can only contain letters, numbers, spaces, and basic punctuation (-, ', /, ,)",
+                            }));
+                          } else if (value.trim().length < 3) {
+                            setErrors((prev) => ({
+                              ...prev,
+                              title: "Job title must be at least 3 characters",
+                            }));
+                          } else {
+                            setErrors((prev) => ({ ...prev, title: "" }));
+                          }
+                        } else {
                           setErrors((prev) => ({ ...prev, title: "" }));
+                        }
                       }}
                       onBlur={() => markTouched("title")}
                       placeholder="e.g. Community Health Worker"
+                      className="placeholder:text-[#1C1C1C]/30"
                     />
                     {errors.title && touched.title && (
                       <p className="text-xs text-red-500 flex items-center gap-1">
@@ -931,12 +997,27 @@ function PostAJobContent() {
                       <Input
                         value={company}
                         onChange={(e) => {
-                          setCompany(e.target.value);
-                          if (errors.company)
+                          const value = e.target.value;
+                          setCompany(value);
+
+                          // Real-time validation
+                          if (value.trim()) {
+                            if (!validateCompany(value)) {
+                              setErrors((prev) => ({
+                                ...prev,
+                                company:
+                                  "Company name can only contain letters, numbers, spaces, and & . - ' ( )",
+                              }));
+                            } else {
+                              setErrors((prev) => ({ ...prev, company: "" }));
+                            }
+                          } else {
                             setErrors((prev) => ({ ...prev, company: "" }));
+                          }
                         }}
                         onBlur={() => markTouched("company")}
                         placeholder="Your organization name"
+                        className="placeholder:text-[#1C1C1C]/30"
                       />
                       {errors.company && touched.company && (
                         <p className="text-xs text-red-500 flex items-center gap-1">
@@ -951,12 +1032,23 @@ function PostAJobContent() {
                       <Input
                         value={website}
                         onChange={(e) => {
-                          setWebsite(e.target.value);
-                          if (errors.website)
+                          const value = e.target.value;
+                          setWebsite(value);
+
+                          // Real-time validation
+                          if (value && !validateWebsite(value)) {
+                            setErrors((prev) => ({
+                              ...prev,
+                              website:
+                                "Please enter a valid website URL (e.g., https://example.com)",
+                            }));
+                          } else {
                             setErrors((prev) => ({ ...prev, website: "" }));
+                          }
                         }}
                         onBlur={() => markTouched("website")}
                         placeholder="https://yourorganization.ca"
+                        className="placeholder:text-[#1C1C1C]/30"
                       />
                       {errors.website && touched.website && (
                         <p className="text-xs text-red-500 flex items-center gap-1">
@@ -976,12 +1068,26 @@ function PostAJobContent() {
                       <Input
                         value={city}
                         onChange={(e) => {
-                          setCity(e.target.value);
-                          if (errors.city)
+                          const value = e.target.value;
+                          setCity(value);
+
+                          // Real-time validation
+                          if (value.trim()) {
+                            if (!validateCity(value)) {
+                              setErrors((prev) => ({
+                                ...prev,
+                                city: "City should only contain letters, spaces, and hyphens (no numbers or special characters)",
+                              }));
+                            } else {
+                              setErrors((prev) => ({ ...prev, city: "" }));
+                            }
+                          } else {
                             setErrors((prev) => ({ ...prev, city: "" }));
+                          }
                         }}
                         onBlur={() => markTouched("city")}
                         placeholder="e.g. Edmonton"
+                        className="placeholder:text-[#1C1C1C]/30"
                       />
                       {errors.city && touched.city && (
                         <p className="text-xs text-red-500 flex items-center gap-1">
@@ -1056,13 +1162,23 @@ function PostAJobContent() {
                         <Input
                           value={salary}
                           onChange={(e) => {
-                            setSalary(e.target.value);
-                            if (errors.salary)
+                            const value = e.target.value;
+                            setSalary(value);
+
+                            // Real-time validation
+                            if (value && !validateSalary(value)) {
+                              setErrors((prev) => ({
+                                ...prev,
+                                salary:
+                                  "Salary must be a number or range (e.g., 20 or 20-35)",
+                              }));
+                            } else {
                               setErrors((prev) => ({ ...prev, salary: "" }));
+                            }
                           }}
                           onBlur={() => markTouched("salary")}
                           placeholder="e.g. 20 - 35"
-                          className="flex-1"
+                          className="flex-1 placeholder:text-[#1C1C1C]/30"
                         />
                         <select
                           value={salaryType}
@@ -1092,15 +1208,26 @@ function PostAJobContent() {
                       <Input
                         value={nocCode}
                         onChange={(e) => {
-                          setNocCode(
-                            e.target.value.replace(/\D/g, "").slice(0, 5),
-                          );
-                          if (errors.nocCode)
+                          const value = e.target.value
+                            .replace(/\D/g, "")
+                            .slice(0, 5);
+                          setNocCode(value);
+
+                          // Real-time validation
+                          if (value && !validateNocCode(value)) {
+                            setErrors((prev) => ({
+                              ...prev,
+                              nocCode:
+                                "NOC code must be exactly 5 digits (e.g., 21231)",
+                            }));
+                          } else {
                             setErrors((prev) => ({ ...prev, nocCode: "" }));
+                          }
                         }}
                         onBlur={() => markTouched("nocCode")}
                         placeholder="e.g. 21231"
                         maxLength={5}
+                        className="placeholder:text-[#1C1C1C]/30"
                       />
                       {errors.nocCode && touched.nocCode && (
                         <p className="text-xs text-red-500 flex items-center gap-1">
@@ -1136,6 +1263,7 @@ function PostAJobContent() {
                         value={experience}
                         onChange={(e) => setExperience(e.target.value)}
                         placeholder="e.g. 2+ years"
+                        className="placeholder:text-[#1C1C1C]/30"
                       />
                     </div>
                     <div>
